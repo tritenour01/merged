@@ -87,7 +87,8 @@ Vector3 Triangle::getNormal(Vector3& p)
     Vector3 result;
     if(smooth)
         result = (1-u-v) * N1 + u * N2 + v * N3;
-    result = n;
+    else
+        result = n;
 
     if(isTransformed){
         Vector3 newNormal;
