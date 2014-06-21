@@ -66,13 +66,11 @@ pixel* Raytracer::traceImage(void)
     for(int i = 0; i < config.height; i++){
         cout<<i<<endl;
         for(int j = 0; j < config.width; j++){
+            //cout<<j<<endl;
             #ifdef DEBUG
             currentCount = counter;
             debug[counter] = pixel(Vector3(0, 0, 0));
             #endif
-
-            if(i == 270 && j == 250)
-                cout<<"HERE";
 
             image[counter] = pixel(config.sampler->samplePixel(j, i));
             counter++;
@@ -139,8 +137,10 @@ Vector3 Raytracer::computeColor(Ray& ray, int depth)
     if(ray.s->getMaterial().getRefraction() > 0.0f)
         refraction = calculateRefraction(ray, depth);
 
+    Vector3 amb = config.ambient * ray.s->getMaterial().getDiffuse(ray.point);
+
     //final color
-    return (config.ambient * ray.s->getMaterial().getDiffuse()) + calculateLight(ray) + reflection + refraction;
+    return amb + calculateLight(ray) + reflection + refraction;
 }
 
 //computes the light calculations
@@ -149,6 +149,8 @@ Vector3 Raytracer::calculateLight(Ray& ray)
     //normal at point
     Vector3 n = ray.s->getNormal(ray.point);
     n.normalize();
+
+    Vector3 diffuse = ray.s->getMaterial().getDiffuse(ray.point);
 
     Light* current;
     Vector3 color = Vector3(0, 0, 0);
@@ -175,7 +177,7 @@ Vector3 Raytracer::calculateLight(Ray& ray)
         if(!intersectRay(shadow) || shadow.t > 1.0f){
             if(ray.s->getMaterial().getDiffuseFactor() > 0.0){
                 //diffuse term
-                color += (1.0f / (dist * dist)) * current->getIntensity() * ray.s->getMaterial().getDiffuse() * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
+                color += (1.0f / (dist * dist)) * current->getIntensity() * diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
             }
             //specular term
             color += current->getIntensity() * ray.s->getMaterial().getSpecular() * pow(max(0.0f, Vector3::DotProduct(v, r)), ray.s->getMaterial().getShineness());

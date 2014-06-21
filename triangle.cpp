@@ -97,3 +97,17 @@ Vector3 Triangle::getNormal(Vector3& p)
     }
     return result;
 }
+
+//the shadow rays are fucking up u and v
+void Triangle::getUV(Vector3& point, float& U, float& V)
+{
+    U = (1-u-v) * tex1.x + u * tex2.x + v * tex3.x;
+    V = (1-u-v) * tex1.y + u * tex2.y + v * tex3.y;
+}
+
+void Triangle::setUV(Vector3 t1, Vector3 t2, Vector3 t3)
+{
+    tex1 = t1;
+    tex2 = t2;
+    tex3 = t3;
+}

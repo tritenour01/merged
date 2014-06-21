@@ -2,12 +2,15 @@
 #define MATERIAL_H_INCLUDED
 
 #include "vector.h"
+#include "texture.h"
 
-struct Material
+class Shape;
+
+class Material
 {
     public:
 
-        Material(void);
+        Material(Shape*);
 
         //setters for the material
         void setDiffuse(Vector3);
@@ -16,9 +19,10 @@ struct Material
         void setShineness(float);
         void setReflective(float);
         void setRefraction(float);
+        void setTexture(Texture*);
 
         //getters for the material
-        Vector3 getDiffuse(void);
+        Vector3 getDiffuse(Vector3&);
         float getDiffuseFactor(void);
         Vector3 getSpecular(void);
         float getShineness(void);
@@ -33,6 +37,9 @@ struct Material
         float shineness;
         float reflect;
         float refract;
+        Texture* texture;
+
+        Shape* owner;
 };
 
 #endif // MATERIAL_H_INCLUDED

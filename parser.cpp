@@ -65,6 +65,12 @@ bool Parser::loadScene(string file, Config& c)
 
             c.sampler = new adaptiveSampler(raytracer, c, sampling, threshold);
         }
+        else if(option == "jitter"){
+            int sampling;
+            scene>>sampling;
+
+            c.sampler = new jitterSampler(raytracer, c, sampling);
+        }
         //set the background color
         else if(option == "background"){
             Vector3 newBackground;
@@ -252,6 +258,38 @@ bool Parser::loadScene(string file, Config& c)
                     scene>>newRefraction;
                     current->getMaterial().setRefraction(newRefraction);
                 }
+                else if(option == "texture"){
+                    string filePath, sampling, clamping;
+                    scene>>filePath;
+                    scene>>sampling;
+                    scene>>clamping;
+
+                    Texture::SamplingType s;
+                    if(sampling == "NEAREST")
+                        s = Texture::NEAREST;
+                    else if(sampling == "BILINEAR")
+                        s = Texture::BILINEAR;
+                    else{
+                        cout<<"BAD texture option "<<sampling<<endl;
+                        retValue = false;
+                    }
+
+                    Texture::ClampingType c;
+                    if(clamping == "CLAMP")
+                        c = Texture::CLAMP;
+                    else if(clamping == "REPEAT")
+                        c = Texture::REPEAT;
+                    else{
+                        cout<<"BAD texture option "<<clamping<<endl;
+                        retValue = false;
+                    }
+
+                    Texture* t = Texture::loadTexture(filePath, s, c);
+                    if(!t)
+                        retValue = false;
+                    else
+                        current->getMaterial().setTexture(t);
+                }
                 //end the setup
                 else if(option == "end"){
                     break;
@@ -342,6 +380,8 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
 {
     vector<Vector3> normals;
     vector<Vector3> texCoords;
+    vector<float> texU;
+    vector<float> texV;
 
     int nFaces = 0;
 
@@ -355,6 +395,7 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
     string line, token;
     vector<int> face;
     vector<int> faceNormal;
+    vector<int> faceTex;
 
     getline( objStream, line );
     while( !objStream.eof() ) {
@@ -383,6 +424,7 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                 // Process face
                 face.clear();
                 faceNormal.clear();
+                faceTex.clear();
                 size_t slash1, slash2;
                 //int point, texCoord, normal;
                 while( lineStream.good() ) {
@@ -399,6 +441,7 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                                         - 1;
                         if( slash2 > slash1 + 1 ) {
                                 tcIndex = atoi( vertString.substr(slash1 + 1, slash2).c_str() ) - 1;
+                                faceTex.push_back(tcIndex);
                         }
                         nIndex = atoi( vertString.substr(slash2 + 1,vertString.length()).c_str() ) - 1;
                         if(nIndex >= 0)
@@ -421,22 +464,34 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                         int n0 = faceNormal[0];
                         int n1 = faceNormal[1];
                         int n2 = faceNormal[2];
+
+                        int tc0 = faceTex[0];
+                        int tc1 = faceTex[1];
+                        int tc2 = faceTex[2];
                         // First face
                         Triangle* newTri = new Triangle(&points[v0], &points[v2], &points[v1], false);
                         newTri->setNormals(normals[n0], normals[n2], normals[n1]);
+                        if(faceTex.size() > 3)
+                                newTri->setUV(texCoords[tc0], texCoords[tc2], texCoords[tc1]);
                         faces.push_back(newTri);
                         for( int i = 3; i < face.size(); i++ ) {
                             v1 = v2;
                             v2 = face[i];
                             n1 = n2;
                             n2 = faceNormal[i];
+                            tc1 = tc2;
+                            tc2 = faceTex[i];
                             newTri = new Triangle(&points[v0], &points[v2], &points[v1], false);
                             newTri->setNormals(normals[n0], normals[n2], normals[n1]);
+                            if(faceTex.size() > 3)
+                                newTri->setUV(texCoords[tc0], texCoords[tc2], texCoords[tc1]);
                             faces.push_back(newTri);
                         }
                     } else {
                         Triangle* newTri = new Triangle(&points[face[0]], &points[face[2]], &points[face[1]], false);
                         newTri->setNormals(normals[faceNormal[0]], normals[faceNormal[2]], normals[faceNormal[1]]);
+                        if(faceTex.size() == 3)
+                            newTri->setUV(texCoords[faceTex[0]], texCoords[faceTex[2]], texCoords[faceTex[1]]);
                         faces.push_back(newTri);
                     }
                 }

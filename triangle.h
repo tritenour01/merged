@@ -14,6 +14,9 @@ class Triangle : public Shape
         bool Intersection(Ray&, float&);
         Vector3 getNormal(Vector3&);
 
+        void setUV(Vector3, Vector3, Vector3);
+        void getUV(Vector3&, float&, float&);
+
         Vector3 getPlanarNormal(void);
 
         void setNormals(Vector3, Vector3, Vector3);
@@ -31,6 +34,10 @@ class Triangle : public Shape
         Vector3 N3;
 
         float dist;
+
+        Vector3 tex1;
+        Vector3 tex2;
+        Vector3 tex3;
 
         float u, v;
 

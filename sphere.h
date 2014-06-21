@@ -17,6 +17,8 @@ class Sphere : public Shape
 
         Vector3 getNormal(Vector3&);
 
+        void getUV(Vector3&, float&, float&);
+
     private:
 
         Vector3 center;

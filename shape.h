@@ -17,6 +17,7 @@ class Shape
         //viretual functions for all objects
         virtual bool Intersection(Ray&, float&) =0;
         virtual Vector3 getNormal(Vector3&) =0;
+        virtual void getUV(Vector3&, float&, float&) =0;
 
         bool intersectRay(Ray&, Hitpoint&);
 
@@ -25,6 +26,9 @@ class Shape
         void Translate(Vector3&);
         void Rotate(Vector3&);
         void Scale(Vector3&);
+
+        bool transformed(void);
+        Matrix4x4 getInvTrans(void);
 
     private:
 

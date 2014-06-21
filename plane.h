@@ -17,6 +17,8 @@ class Plane : public Shape
         bool Intersection(Ray&, float&);
         Vector3 getNormal(Vector3&);
 
+        void getUV(Vector3&, float&, float&);
+
     private:
 
         Vector3 center;

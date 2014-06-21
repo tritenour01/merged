@@ -32,6 +32,7 @@ class Octree
         void createTree(vector<Triangle*>*);
         bool intersectRay(Ray&, float&);
         Vector3 getNormal(Vector3&);
+        void getUV(Vector3&, float&, float&);
 
     private:
 

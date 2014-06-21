@@ -201,3 +201,35 @@ Vector3 Box::getNormal(Vector3& p)
 
     return result;
 }
+
+void Box::getUV(Vector3& point, float& u, float& v)
+{
+    switch(side){
+        case LEFT:
+            u = (maxCorner.z - point.z) / (maxCorner.z - minCorner.z);
+            v = (point.y - minCorner.y) / (maxCorner.y - minCorner.y);
+            break;
+        case RIGHT:
+            u = (point.z - minCorner.z) / (maxCorner.z - minCorner.z);
+            v = (point.y - minCorner.y) / (maxCorner.y - minCorner.y);
+            break;
+        case TOP:
+            u = (point.x - minCorner.x) / (maxCorner.x - minCorner.x);
+            v = (point.z - minCorner.z) / (maxCorner.z - minCorner.z);
+            break;
+        case BOTTOM:
+            u = (point.x - minCorner.x) / (maxCorner.x - minCorner.x);
+            v = (maxCorner.z - point.z) / (maxCorner.z - minCorner.z);
+            break;
+        case FRONT:
+            u = (point.x - minCorner.x) / (maxCorner.x - minCorner.x);
+            v = (point.y - minCorner.y) / (maxCorner.y - minCorner.y);
+            break;
+        case BACK:
+            u = (maxCorner.x - point.x) / (maxCorner.x - minCorner.x);
+            v = (point.y - minCorner.y) / (maxCorner.y - minCorner.y);
+            break;
+    }
+
+    //cout<<u<<endl;
+}

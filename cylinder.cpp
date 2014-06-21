@@ -104,3 +104,8 @@ Vector3 Cylinder::getNormal(Vector3& r)
 
     return result;
 }
+
+void Cylinder::getUV(Vector3& point, float& u, float& v)
+{
+
+}

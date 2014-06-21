@@ -47,3 +47,9 @@ Vector3 Mesh::getNormal(Vector3& p)
     }
     return triangles->at(intersectIndex)->getNormal(p);
 }
+
+void Mesh::getUV(Vector3& point, float& u, float& v)
+{
+    if(useOctree)
+        data->getUV(point, u, v);
+}

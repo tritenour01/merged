@@ -41,3 +41,11 @@ Vector3 Sphere::getNormal(Vector3& point)
     }
     return point - center;
 }
+
+void Sphere::getUV(Vector3& point, float& u, float& v)
+{
+    Vector3 n = point - center;
+    n.normalize();
+    u = 0.5f + (atan2(n.z, n.x) / (2.0f * 3.141592653f));
+    v = 0.5f + (asin(n.y) / 3.141592653f);
+}

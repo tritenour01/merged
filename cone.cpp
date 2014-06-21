@@ -80,3 +80,8 @@ Vector3 Cone::getNormal(Vector3& p)
     else
         return Vector3(0, -1, 0);
 }
+
+void Cone::getUV(Vector3& point, float& u, float& v)
+{
+
+}

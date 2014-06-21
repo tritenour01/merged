@@ -40,6 +40,18 @@ class uniformSampler : public Sampler
         int sampling;
 };
 
+class jitterSampler : public Sampler
+{
+    public:
+
+        jitterSampler(Raytracer*, Config&, int);
+        Vector3 samplePixel(int, int);
+
+    private:
+
+        int sampling;
+};
+
 class adaptiveSampler : public Sampler
 {
     public:

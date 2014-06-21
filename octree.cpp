@@ -358,6 +358,8 @@ void Octree::computeBounds(vector<Triangle*> triangles, Vector3& minBound, Vecto
 
     minBound -= Vector3(0.01, 0.01, 0.01);
     maxBound += Vector3(0.01, 0.01, 0.01);
+
+    cout<<minBound<<maxBound;
 }
 
 void Octree::computePoints(AABB& aabb)
@@ -477,3 +479,7 @@ Vector3 Octree::getNormal(Vector3& p)
     return intersectObj->getNormal(p);
 }
 
+void Octree::getUV(Vector3& p, float& u, float& v)
+{
+    intersectObj->getUV(p, u, v);
+}

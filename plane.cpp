@@ -88,3 +88,9 @@ Vector3 Plane::getNormal(Vector3& p)
     }
     return normal;
 }
+
+void Plane::getUV(Vector3& point, float& u, float& v)
+{
+    u = Vector3::DotProduct(point, right);
+    v = Vector3::DotProduct(point, up);
+}

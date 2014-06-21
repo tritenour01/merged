@@ -14,6 +14,8 @@ class Box : public Shape
         bool Intersection(Ray&, float&);
         Vector3 getNormal(Vector3&);
 
+        void getUV(Vector3&, float&, float&);
+
         Vector3 minCorner;
         Vector3 maxCorner;
 

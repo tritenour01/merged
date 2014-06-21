@@ -1,7 +1,7 @@
 #include "shape.h"
 #include "raytracer.h"
 
-Shape::Shape(void) : isTransformed(false){}
+Shape::Shape(void) : isTransformed(false), material(this){}
 
 bool Shape::intersectRay(Ray& ray, Hitpoint& hit)
 {
@@ -63,4 +63,14 @@ void Shape::applyTransform(Transform t, Vector3& v)
     normalTrans = invTrans;
     normalTrans.transpose();
     isTransformed = true;
+}
+
+bool Shape::transformed(void)
+{
+    return isTransformed;
+}
+
+Matrix4x4 Shape::getInvTrans(void)
+{
+    return invTrans;
 }
