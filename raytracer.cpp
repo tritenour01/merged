@@ -6,7 +6,7 @@ Raytracer::Raytracer(string scene)
     //set the default
     config.width = 100;
     config.height = 100;
-    config.camera = new Camera(Vector3(0, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0), config.width, config.height);
+    config.camera = NULL;
     config.ambient = 0.0f;
     config.backColor = Vector3(0.0f, 0.0f, 0.0f);
     config.reflectionDepth = 1;
@@ -19,6 +19,8 @@ Raytracer::Raytracer(string scene)
 
     if(config.sampler == NULL)
         config.sampler = new simpleSampler(this, config);
+    if(config.camera == NULL)
+        config.camera = new Camera(Vector3(0, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0), config.width, config.height);
 }
 
 Raytracer::~Raytracer(void)
@@ -64,7 +66,7 @@ pixel* Raytracer::traceImage(void)
     //set the color of each pixel
     int counter = 0;
     for(int i = 0; i < config.height; i++){
-        cout<<i<<endl;
+        cout<<"\r"<<i+1<<"/"<<config.height<<" rows         ";
         for(int j = 0; j < config.width; j++){
             //cout<<j<<endl;
             #ifdef DEBUG
@@ -76,6 +78,7 @@ pixel* Raytracer::traceImage(void)
             counter++;
         }
     }
+    cout<<endl;
 
     return image;
 }

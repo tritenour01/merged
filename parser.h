@@ -7,15 +7,7 @@
 #include <fstream>
 #include <cstdlib>
 
-#include "sphere.h"
-#include "plane.h"
-#include "triangle.h"
-#include "box.h"
-#include "cylinder.h"
-#include "cone.h"
-#include "mesh.h"
-#include "camera.h"
-#include "light.h"
+#include "sceneParser.h"
 
 class Raytracer;
 struct Config;
