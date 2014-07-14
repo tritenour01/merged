@@ -81,11 +81,6 @@ bool Plane::Intersection(Ray& r, float& t)
 //return the plane's normal
 Vector3 Plane::getNormal(Vector3& p)
 {
-    if(isTransformed){
-        Vector3 newNormal;
-        Matrix4x4::transformDirection(normalTrans, newNormal, normal);
-        return newNormal;
-    }
     return normal;
 }
 

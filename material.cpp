@@ -10,6 +10,8 @@ Material::Material(Shape* o) : owner(o)
     reflect = 0.0f;
     refract = 0.0f;
     texture = NULL;
+    bumpMap = NULL;
+    normalMap = NULL;
 }
 
 void Material::setDiffuse(Vector3 d)
@@ -25,6 +27,11 @@ void Material::setDiffuseFactor(float d)
 void Material::setSpecular(Vector3 s)
 {
     specularColor = s;
+}
+
+void Material::setSpecularFactor(float s)
+{
+    specularFactor = s;
 }
 
 void Material::setShineness(float s)
@@ -45,6 +52,16 @@ void Material::setRefraction(float r)
 void Material::setTexture(Texture* t)
 {
     texture = t;
+}
+
+void Material::setBumpMap(Texture* b)
+{
+    bumpMap = b;
+}
+
+void Material::setNormalMap(Texture* n)
+{
+    normalMap = n;
 }
 
 Vector3 Material::getDiffuse(Vector3& point)
@@ -76,6 +93,11 @@ Vector3 Material::getSpecular(void)
     return specularColor;
 }
 
+float Material::getSpecularFactor(void)
+{
+    return specularFactor;
+}
+
 float Material::getShineness(void)
 {
     return shineness;
@@ -89,4 +111,38 @@ float Material::getReflective(void)
 float Material::getRefraction(void)
 {
     return refract;
+}
+
+bool Material::normalsAltered(void)
+{
+    return (bumpMap != NULL || normalMap != NULL);
+}
+
+Vector3 Material::getNormal(Vector3& point)
+{
+    if(bumpMap){
+        float u = 0.0f, v = 0.0f;
+        if(owner->transformed()){
+            Vector3 newPoint;
+            Matrix4x4 invTrans = owner->getInvTrans();
+            Matrix4x4::transformPoint(invTrans, newPoint, point);
+            owner->getUV(newPoint, u, v);
+        }
+        else
+            owner->getUV(point, u, v);
+        return bumpMap->sampleBump(u, v);
+    }
+    if(normalMap){
+        float u = 0.0f, v = 0.0f;
+        if(owner->transformed()){
+            Vector3 newPoint;
+            Matrix4x4 invTrans = owner->getInvTrans();
+            Matrix4x4::transformPoint(invTrans, newPoint, point);
+            owner->getUV(newPoint, u, v);
+        }
+        else
+            owner->getUV(point, u, v);
+        return normalMap->sampleNormal(u, v);
+    }
+    return Vector3(0, 0, 0);
 }

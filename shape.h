@@ -14,12 +14,11 @@ class Shape
 
         Shape(void);
 
-        //viretual functions for all objects
-        virtual bool Intersection(Ray&, float&) =0;
-        virtual Vector3 getNormal(Vector3&) =0;
+        //virtual functions for all objects
         virtual void getUV(Vector3&, float&, float&) =0;
 
         bool intersectRay(Ray&, Hitpoint&);
+        Vector3 computeNormal(Vector3&);
 
         Material& getMaterial(void);
 
@@ -31,6 +30,9 @@ class Shape
         Matrix4x4 getInvTrans(void);
 
     private:
+
+        virtual bool Intersection(Ray&, float&) =0;
+        virtual Vector3 getNormal(Vector3&) =0;
 
         enum Transform {TRANS, SCALE, ROT};
 

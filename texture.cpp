@@ -102,3 +102,27 @@ Vector3 Texture::sampleTexture(float u, float v)
     }
 }
 
+Vector3 Texture::sampleBump(float u, float v)
+{
+    float val00 = 2.0f * sampleTexture(u - 1.0f / (float)imageWidth, v - 1.0f / (float)imageHeight).x - 1.0f;
+    float val01 = 2.0f * sampleTexture(u - 1.0f / (float)imageWidth, v).x - 1.0f;
+    float val02 = 2.0f * sampleTexture(u - 1.0f / (float)imageWidth, v + 1.0f / (float)imageHeight).x - 1.0f;
+    float val10 = 2.0f * sampleTexture(u, v - 1.0f / (float)imageHeight).x - 1.0f;
+    float val11 = 2.0f * sampleTexture(u, v).x - 1.0f;
+    float val12 = 2.0f * sampleTexture(u, v + 1.0f / (float)imageHeight).x - 1.0f;
+    float val20 = 2.0f * sampleTexture(u + 1.0f / (float)imageWidth, v - 1.0f / (float)imageHeight).x - 1.0f;
+    float val21 = 2.0f * sampleTexture(u + 1.0f / (float)imageWidth, v).x - 1.0f;
+    float val22 = 2.0f * sampleTexture(u + 1.0f / (float)imageWidth, v + 1.0f / (float)imageHeight).x - 1.0f;
+
+    float xDiff = (0.5f * val02) + (2.0f * val01) + (0.5f * val00) - (0.5f * val22) - (2.0f * val21) - (0.5f * val20);
+    float yDiff = (0.5f * val00) + (2.0f * val10) + (0.5f * val20) - (0.5f * val02) - (2.0f * val12) - (0.5f * val22);
+    return Vector3(xDiff, yDiff, 1.0f);
+}
+
+Vector3 Texture::sampleNormal(float u, float v)
+{
+    Vector3 C = sampleTexture(u, v);
+    C *= 2.0f;
+    C -= Vector3(1.0f, 1.0f, 1.0f);
+    return C;
+}

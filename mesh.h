@@ -13,12 +13,12 @@ class Mesh : public Shape
 
         Mesh(std::vector<Triangle*>*, std::vector<Vector3>*);
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
-
         void getUV(Vector3&, float&, float&);
 
     private:
+
+        bool Intersection(Ray&, float&);
+        Vector3 getNormal(Vector3&);
 
         const bool useOctree = true;
 

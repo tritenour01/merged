@@ -14,12 +14,12 @@ class Plane : public Shape
         Plane(Vector3, Vector3, float, Vector3, float);
         Plane(Vector3, Vector3, Vector3);
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
-
         void getUV(Vector3&, float&, float&);
 
     private:
+
+        bool Intersection(Ray&, float&);
+        Vector3 getNormal(Vector3&);
 
         Vector3 center;
         Vector3 up;

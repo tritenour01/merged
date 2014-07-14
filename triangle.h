@@ -11,9 +11,6 @@ class Triangle : public Shape
 
         Triangle(Vector3*, Vector3*, Vector3*, bool);
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
-
         void setUV(Vector3, Vector3, Vector3);
         void getUV(Vector3&, float&, float&);
 
@@ -26,6 +23,9 @@ class Triangle : public Shape
         Vector3* p3;
 
     private:
+
+        bool Intersection(Ray&, float&);
+        Vector3 getNormal(Vector3&);
 
         Vector3 n;
 

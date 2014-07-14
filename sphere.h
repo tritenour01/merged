@@ -13,13 +13,12 @@ class Sphere : public Shape
 
         Sphere(Vector3, float);
 
-        bool Intersection(Ray&, float&);
-
-        Vector3 getNormal(Vector3&);
-
         void getUV(Vector3&, float&, float&);
 
     private:
+
+        bool Intersection(Ray&, float&);
+        Vector3 getNormal(Vector3&);
 
         Vector3 center;
         float radius;

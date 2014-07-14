@@ -34,10 +34,7 @@ Vector3 Sphere::getNormal(Vector3& point)
     if(isTransformed){
         Vector3 newPoint;
         Matrix4x4::transformPoint(invTrans, newPoint, point);
-        Vector3 normal = newPoint - center;
-        Vector3 newNormal;
-        Matrix4x4::transformDirection(normalTrans, newNormal, normal);
-        return newNormal;
+        return newPoint - center;
     }
     return point - center;
 }

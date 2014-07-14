@@ -17,6 +17,8 @@ class Texture
         static Texture* loadTexture(string, SamplingType, ClampingType);
 
         Vector3 sampleTexture(float, float);
+        Vector3 sampleBump(float, float);
+        Vector3 sampleNormal(float, float);
 
     private:
 

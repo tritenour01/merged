@@ -169,37 +169,21 @@ bool Box::Intersection(Ray& ray, float& t)
 
 Vector3 Box::getNormal(Vector3& p)
 {
-    Vector3 result;
-
     //determine the normal based on the intersection side
     switch(side){
         case LEFT:
-            result = Vector3(-1.0f, 0.0f, 0.0f);
-            break;
+            return Vector3(-1.0f, 0.0f, 0.0f);
         case RIGHT:
-            result = Vector3(1.0f, 0.0f, 0.0f);
-            break;
+            return Vector3(1.0f, 0.0f, 0.0f);
         case TOP:
-            result = Vector3(0.0f, 1.0f, 0.0f);
-            break;
+            return Vector3(0.0f, 1.0f, 0.0f);
         case BOTTOM:
-            result = Vector3(0.0f, -1.0f, 0.0f);
-            break;
+            return Vector3(0.0f, -1.0f, 0.0f);
         case FRONT:
-            result = Vector3(0.0f, 0.0f, -1.0f);
-            break;
+            return Vector3(0.0f, 0.0f, -1.0f);
         case BACK:
-            result = Vector3(0.0f, 0.0f, 1.0f);
-            break;
+            return Vector3(0.0f, 0.0f, 1.0f);
     }
-
-    if(isTransformed){
-        Vector3 transformNormal;
-        Matrix4x4::transformDirection(normalTrans, transformNormal, result);
-        return transformNormal;
-    }
-
-    return result;
 }
 
 void Box::getUV(Vector3& point, float& u, float& v)
@@ -230,6 +214,4 @@ void Box::getUV(Vector3& point, float& u, float& v)
             v = (point.y - minCorner.y) / (maxCorner.y - minCorner.y);
             break;
     }
-
-    //cout<<u<<endl;
 }

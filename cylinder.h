@@ -12,12 +12,12 @@ class Cylinder : public Shape
 
         Cylinder(Vector3, float, float);
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
-
         void getUV(Vector3&, float&, float&);
 
     private:
+
+        bool Intersection(Ray&, float&);
+        Vector3 getNormal(Vector3&);
 
         enum PART_ID {SIDE, TOP, BOTTOM};
         PART_ID part;

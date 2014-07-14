@@ -191,11 +191,11 @@ bool Octree::drawTree(Ray& ray, float& t, Node* current, int depth, float* Min, 
         return false;
     if(depth >= d || current->children == NULL){
         bool intersect = false;
-        float testT;
-        if(current->num > 0 && current->aabb.bounds->Intersection(ray, testT)){
+        Hitpoint hit;
+        if(current->num > 0 && current->aabb.bounds->intersectRay(ray, hit)){
             intersect = true;
-            if(testT > Ray::SMALL && testT < t){
-                t = testT;
+            if(hit.t > Ray::SMALL && hit.t < t){
+                t = hit.t;
                 intersectObj = current->aabb.bounds;
             }
         }
@@ -229,12 +229,12 @@ bool Octree::intersectSubTrees(Ray& ray, float& t, Node* current, float* Min, fl
 {
     if(current->children == NULL){
         bool intersect = false;
-        float testT;
+        Hitpoint h;
         for(int i = 0; i < current->data.size(); i++){
-            if(current->data[i]->Intersection(ray, testT)){
+            if(current->data[i]->intersectRay(ray, h)){
                 intersect = true;
-                if(testT > Ray::SMALL && testT < t){
-                    t = testT;
+                if(h.t > Ray::SMALL && h.t < t){
+                    t = h.t;
                     intersectObj = current->data[i];
                 }
             }
@@ -358,8 +358,6 @@ void Octree::computeBounds(vector<Triangle*> triangles, Vector3& minBound, Vecto
 
     minBound -= Vector3(0.01, 0.01, 0.01);
     maxBound += Vector3(0.01, 0.01, 0.01);
-
-    cout<<minBound<<maxBound;
 }
 
 void Octree::computePoints(AABB& aabb)
@@ -476,7 +474,7 @@ bool Octree::pointInAABB(Vector3& point, AABB& aabb)
 
 Vector3 Octree::getNormal(Vector3& p)
 {
-    return intersectObj->getNormal(p);
+    return intersectObj->computeNormal(p);
 }
 
 void Octree::getUV(Vector3& p, float& u, float& v)

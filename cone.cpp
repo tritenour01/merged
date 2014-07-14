@@ -83,5 +83,15 @@ Vector3 Cone::getNormal(Vector3& p)
 
 void Cone::getUV(Vector3& point, float& u, float& v)
 {
-
+    if(part == SIDE){
+        Vector3 n = point - base;
+        v = n.y / height;
+        n.normalize();
+        u = 0.5f + (atan2(n.z, n.x) / (2.0f * 3.141592653f));
+    }
+    else{
+        Vector3 n = point - base;
+        u = 0.5f + (n.x / (2 * radius));
+        v = 0.5f + (n.z / (2 * radius));
+    }
 }

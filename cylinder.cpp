@@ -84,28 +84,30 @@ Vector3 Cylinder::getNormal(Vector3& r)
     else if(part == BOTTOM)
         result = Vector3(0.0, -1.0, 0.0);
 
-    if(isTransformed){
-        if(part == SIDE){
-            Vector3 newPoint;
-            Matrix4x4::transformPoint(invTrans, newPoint, r);
-            result = newPoint - base;
-            result.y = 0.0f;
-        }
-        Vector3 newNormal;
-        Matrix4x4::transformDirection(normalTrans, newNormal, result);
-        return newNormal;
+    if(isTransformed && part == SIDE){
+        Vector3 newPoint;
+        Matrix4x4::transformPoint(invTrans, newPoint, r);
+        result = newPoint - base;
+        result.y = 0.0f;
     }
-    else{
-        if(part == SIDE){
-            result = r - base;
-            result.y = 0.0f;
-        }
+    else if(part == SIDE){
+        result = r - base;
+        result.y = 0.0f;
     }
-
     return result;
 }
 
 void Cylinder::getUV(Vector3& point, float& u, float& v)
 {
-
+    if(part == SIDE){
+        Vector3 n = point - base;
+        v = n.y / height;
+        n.normalize();
+        u = 0.5f + (atan2(n.z, n.x) / (2.0f * 3.141592653f));
+    }
+    else{
+        Vector3 n = point - base;
+        u = 0.5f + (n.x / (2 * radius));
+        v = 0.5f + (n.z / (2 * radius));
+    }
 }

@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "raytracer.h"
 
 Mesh::Mesh(std::vector<Triangle*>* t, std::vector<Vector3>* p)
 {
@@ -18,12 +19,12 @@ bool Mesh::Intersection(Ray& ray, float& t)
     }
     else{
         float minT = FLT_MAX;
-        float tempT;
+        Hitpoint h;
         bool hit = false;
         for(int i = 0; i < triangles->size(); i++){
-            if(triangles->at(i)->Intersection(ray, tempT)){
-                if(tempT < minT && tempT >= Ray::SMALL){
-                    minT = tempT;
+            if(triangles->at(i)->intersectRay(ray, h)){
+                if(h.t < minT && h.t >= Ray::SMALL){
+                    minT = h.t;
                     intersectIndex = i;
                 }
                 hit = true;
@@ -36,16 +37,9 @@ bool Mesh::Intersection(Ray& ray, float& t)
 
 Vector3 Mesh::getNormal(Vector3& p)
 {
-    if(useOctree){
-        if(isTransformed){
-            Vector3 normal = data->getNormal(p);
-            Vector3 newNormal;
-            Matrix4x4::transformDirection(normalTrans, newNormal, normal);
-            return newNormal;
-        }
+    if(useOctree)
         return data->getNormal(p);
-    }
-    return triangles->at(intersectIndex)->getNormal(p);
+    return triangles->at(intersectIndex)->computeNormal(p);
 }
 
 void Mesh::getUV(Vector3& point, float& u, float& v)

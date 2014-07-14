@@ -74,6 +74,9 @@ pixel* Raytracer::traceImage(void)
             debug[counter] = pixel(Vector3(0, 0, 0));
             #endif
 
+            if(j == 200 && i == 200)
+                cout<<"HERE";
+
             image[counter] = pixel(config.sampler->samplePixel(j, i));
             counter++;
         }
@@ -127,8 +130,7 @@ Vector3 Raytracer::computeColor(Ray& ray, int depth)
         return Vector3(0, 0, 0);
 
     //normal at point
-    Vector3 n = ray.s->getNormal(ray.point);
-    n.normalize();
+    Vector3 n = ray.s->computeNormal(ray.point);
 
     //reflection amount
     Vector3 reflection(0, 0, 0);
@@ -138,57 +140,69 @@ Vector3 Raytracer::computeColor(Ray& ray, int depth)
     //refraction amount
     Vector3 refraction(0, 0, 0);
     if(ray.s->getMaterial().getRefraction() > 0.0f)
-        refraction = calculateRefraction(ray, depth);
+        refraction = calculateRefraction(ray, n, depth);
 
     Vector3 amb = config.ambient * ray.s->getMaterial().getDiffuse(ray.point);
 
     //final color
-    return amb + calculateLight(ray) + reflection + refraction;
+    return amb + calculateLight(ray, n) + reflection + refraction;
 }
 
 //computes the light calculations
-Vector3 Raytracer::calculateLight(Ray& ray)
+Vector3 Raytracer::calculateLight(Ray& ray, Vector3& n)
 {
-    //normal at point
-    Vector3 n = ray.s->getNormal(ray.point);
-    n.normalize();
-
     Vector3 diffuse = ray.s->getMaterial().getDiffuse(ray.point);
 
     Light* current;
-    Vector3 color = Vector3(0, 0, 0);
+    Vector3 totalColor = Vector3(0, 0, 0);
 
     //compute the effect of every light in the scene
     for(int i = 0; i < lights.size(); i++){
         current = lights[i];
 
-        //light direction
-        Vector3 l = current->getPos() - ray.point;
-        float dist = l.getLength();
-        l.normalize();
-
-        //light reflection vector
-        Vector3 r = (2.0f * Vector3::DotProduct(n, l) * n) - l;
-        r.normalize();
-
-        //view direction
-        Vector3 v = config.camera->getPosition() - ray.point;
-        v.normalize();
+        //add light color
+        //change name of calculateLight to calculateShading
 
         //determine if the point is affected by light
         Ray shadow = Ray(ray.point, current->getPos() - ray.point);
         if(!intersectRay(shadow) || shadow.t > 1.0f){
+
+            //light direction
+            Vector3 l = current->getPos() - ray.point;
+            float dist = l.getLength();
+            l.normalize();
+
+            //light reflection vector
+            Vector3 r = (2.0f * Vector3::DotProduct(n, l) * n) - l;
+            r.normalize();
+
+            //view direction
+            Vector3 v = config.camera->getPosition() - ray.point;
+            v.normalize();
+
+            float atten = current->getAttenuation(dist);
+
+            Vector3 color = Vector3(0, 0, 0);
             if(ray.s->getMaterial().getDiffuseFactor() > 0.0){
                 //diffuse term
-                color += (1.0f / (dist * dist)) * current->getIntensity() * diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
+                color += atten * current->getIntensity() * diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
             }
-            //specular term
-            color += current->getIntensity() * ray.s->getMaterial().getSpecular() * pow(max(0.0f, Vector3::DotProduct(v, r)), ray.s->getMaterial().getShineness());
+            if(ray.s->getMaterial().getSpecularFactor() > 0.0){
+                //specular term
+                color += atten * current->getIntensity() * ray.s->getMaterial().getSpecularFactor() * ray.s->getMaterial().getSpecular() * pow(max(0.0f, Vector3::DotProduct(v, r)), ray.s->getMaterial().getShineness());
+            }
+
+            Vector3 lightColor = current->getColor();
+            color.x *= lightColor.x;
+            color.y *= lightColor.y;
+            color.z *= lightColor.z;
+            totalColor +=  color;
         }
     }
 
-    return color;
+    return totalColor;
 }
+
 
 //computes the reflection color
 Vector3 Raytracer::calculateReflection(Ray& ray, Vector3& n, int depth)
@@ -210,15 +224,11 @@ Vector3 Raytracer::calculateReflection(Ray& ray, Vector3& n, int depth)
 }
 
 //compute the refraction color
-Vector3 Raytracer::calculateRefraction(Ray& ray, int depth)
+Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth)
 {
     //view direction
     Vector3 view = ray.dir;
     view.normalize();
-
-    //intersection normal
-    Vector3 normal = ray.s->getNormal(ray.point);
-    normal.normalize();
 
     Vector3 result;
     float n;

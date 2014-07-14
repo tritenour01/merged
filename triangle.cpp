@@ -84,18 +84,10 @@ Vector3 Triangle::getPlanarNormal(void)
 //return the triangle's planar normal
 Vector3 Triangle::getNormal(Vector3& p)
 {
-    Vector3 result;
     if(smooth)
-        result = (1-u-v) * N1 + u * N2 + v * N3;
+        return (1-u-v) * N1 + u * N2 + v * N3;
     else
-        result = n;
-
-    if(isTransformed){
-        Vector3 newNormal;
-        Matrix4x4::transformDirection(normalTrans, newNormal, result);
-        return newNormal;
-    }
-    return result;
+        return n;
 }
 
 //the shadow rays are fucking up u and v

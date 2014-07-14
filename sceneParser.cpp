@@ -347,10 +347,13 @@ void SceneParser::parseLight(void)
     Vector3 color;
     parseVector(color);
 
+    Vector3 falloff;
+    parseVector(falloff);
+
     float intensity;
     parseNumber(intensity);
 
-    Light* l = new Light(pos, color, intensity);
+    Light* l = new Light(pos, color, falloff, intensity);
     raytracer->addLight(l);
 
     parseToken(Scanner::RightCurly);
@@ -383,8 +386,7 @@ void SceneParser::parseMaterial(Shape* s)
             float coefficent;
             parseNumber(coefficent);
 
-            color *= coefficent;
-
+            s->getMaterial().setSpecularFactor(coefficent);
             s->getMaterial().setSpecular(color);
         }
         else if(tokenText == "shine"){
@@ -432,7 +434,33 @@ void SceneParser::parseMaterial(Shape* s)
                 error("invalid texture clamping option: " + clamping);
 
             Texture* t = Texture::loadTexture(fileName, samp, clamp);
+
+            if(t == NULL)
+                error("Invalid file path \"" + fileName + "\"");
+
             s->getMaterial().setTexture(t);
+        }
+        else if(tokenText == "bumpmap"){
+            parseToken(Scanner::String);
+            string fileName = scanner.tokenText();
+
+            Texture* t = Texture::loadTexture(fileName, Texture::NEAREST, Texture::REPEAT);
+
+            if(t == NULL)
+                error("Invalid file path \"" + fileName + "\"");
+
+            s->getMaterial().setBumpMap(t);
+        }
+        else if(tokenText == "normalmap"){
+            parseToken(Scanner::String);
+            string fileName = scanner.tokenText();
+
+            Texture* t = Texture::loadTexture(fileName, Texture::NEAREST, Texture::REPEAT);
+
+            if(t == NULL)
+                error("Invalid file path \"" + fileName + "\"");
+
+            s->getMaterial().setNormalMap(t);
         }
         else{
             error("undefined material attribute \"" + tokenText + "\"");
