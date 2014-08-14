@@ -97,7 +97,13 @@ Vector3 Texture::sampleTexture(float u, float v)
         return (lt * (1 - uDiff) + rt * uDiff) * vDiff + (lb * (1 - uDiff) + rb * uDiff) * (1 - vDiff);
     }
     else if(sampling == NEAREST){
-        sf::Color c = tex.getPixel(u * imageWidth, v * imageHeight);
+        int uImage = u * (float)imageWidth;
+        if(uImage == imageWidth)
+            uImage--;
+        int vImage = v * (float)imageHeight;
+        if(vImage == imageHeight)
+            vImage--;
+        sf::Color c = tex.getPixel(uImage, vImage);
         return Vector3(c.r / 255.0f, c.g / 255.0f, c.b / 255.0f);
     }
 }

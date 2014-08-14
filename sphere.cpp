@@ -1,4 +1,5 @@
 #include "sphere.h"
+#include "raytracer.h"
 
 Sphere::Sphere(Vector3 c, float r)
 {
@@ -7,7 +8,7 @@ Sphere::Sphere(Vector3 c, float r)
     radius = r;
 }
 
-bool Sphere::Intersection(Ray& r, float& t)
+bool Sphere::Intersection(Ray& r, Hitpoint& h)
 {
     //compute the A, B, and C values of the polynomial
     float B = Vector3::DotProduct(2.0 * r.dir, r.origin - center);
@@ -23,23 +24,23 @@ bool Sphere::Intersection(Ray& r, float& t)
 
     //compute closest t
     float sqrtDisc = sqrt(discriminent);
-    t = min((-B + sqrtDisc) / (2.0f * A), (-B - sqrtDisc) / (2.0f * A));
+    h.t = min((-B + sqrtDisc) / (2.0f * A), (-B - sqrtDisc) / (2.0f * A));
 
     return true;
 }
 
 //return the normal based on the intersection point
-Vector3 Sphere::getNormal(Vector3& point)
+Vector3 Sphere::getNormal(Ray& ray)
 {
     if(isTransformed){
         Vector3 newPoint;
-        Matrix4x4::transformPoint(invTrans, newPoint, point);
+        Matrix4x4::transformPoint(invTrans, newPoint, ray.point);
         return newPoint - center;
     }
-    return point - center;
+    return ray.point - center;
 }
 
-void Sphere::getUV(Vector3& point, float& u, float& v)
+void Sphere::getUV(Vector3& point, Ray& ray, float& u, float& v)
 {
     Vector3 n = point - center;
     n.normalize();

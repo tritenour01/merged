@@ -113,8 +113,14 @@ void SceneParser::parseObjects(void)
                 parseCone();
             else if(tokenText == "cylinder")
                 parseCylinder();
-            else if(tokenText == "light")
-                parseLight();
+            else if(tokenText == "pointlight")
+                parsePointLight();
+            else if(tokenText == "directionallight")
+                parseDirectionalLight();
+            else if(tokenText == "spotlight")
+                parseSpotlight();
+            else if(tokenText == "arealight")
+                parseAreaLight();
             else{
                 error("undefined command: " + tokenText);
             }
@@ -337,7 +343,7 @@ void SceneParser::parseCamera(void)
     parseToken(Scanner::RightCurly);
 }
 
-void SceneParser::parseLight(void)
+void SceneParser::parsePointLight(void)
 {
     parseToken(Scanner::LeftCurly);
 
@@ -353,8 +359,96 @@ void SceneParser::parseLight(void)
     float intensity;
     parseNumber(intensity);
 
-    Light* l = new Light(pos, color, falloff, intensity);
+    Light* l = new PointLight(raytracer, pos, color, falloff, intensity);
     raytracer->addLight(l);
+
+    parseToken(Scanner::RightCurly);
+}
+
+void SceneParser::parseDirectionalLight(void)
+{
+    parseToken(Scanner::LeftCurly);
+
+    Vector3 dir;
+    parseVector(dir);
+
+    Vector3 color;
+    parseVector(color);
+
+    float intensity;
+    parseNumber(intensity);
+
+    Light* l = new DirectionalLight(raytracer, dir, color, intensity);
+    raytracer->addLight(l);
+
+    parseToken(Scanner::RightCurly);
+}
+
+void SceneParser::parseSpotlight(void)
+{
+    parseToken(Scanner::LeftCurly);
+
+    Vector3 pos;
+    parseVector(pos);
+
+    Vector3 lookat;
+    parseVector(lookat);
+
+    Vector3 color;
+    parseVector(color);
+
+    Vector3 falloff;
+    parseVector(falloff);
+
+    float intensity;
+    parseNumber(intensity);
+
+    float innerAngle;
+    parseNumber(innerAngle);
+
+    float outerNumber;
+    parseNumber(outerNumber);
+
+    Light* l = new Spotlight(raytracer, pos, lookat, color, falloff, intensity, innerAngle, outerNumber);
+    raytracer->addLight(l);
+
+    parseToken(Scanner::RightCurly);
+}
+
+void SceneParser::parseAreaLight(void)
+{
+    parseToken(Scanner::LeftCurly);
+
+    Vector3 pos;
+    parseVector(pos);
+
+    Vector3 right;
+    parseVector(right);
+
+    Vector3 up;
+    parseVector(up);
+
+    Vector3 color;
+    parseVector(color);
+
+    Vector3 falloff;
+    parseVector(falloff);
+
+    float intensity;
+    parseNumber(intensity);
+
+    int samplesx;
+    parseNumber(samplesx);
+
+    int samplesy;
+    parseNumber(samplesy);
+
+    Light* l = new AreaLight(raytracer, pos, right, up, color, falloff, intensity, samplesx, samplesy);
+    raytracer->addLight(l);
+
+    Plane* p = new Plane(pos + up * 0.5f + right * 0.5f, right, right.getLength() / 2.0f, up, up.getLength() / 2.0f);
+    p->getMaterial().setEmissive(color);
+    raytracer->addObject(p);
 
     parseToken(Scanner::RightCurly);
 }

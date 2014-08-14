@@ -5,6 +5,7 @@
 #include "texture.h"
 
 class Shape;
+class Ray;
 
 class Material
 {
@@ -23,9 +24,10 @@ class Material
         void setTexture(Texture*);
         void setBumpMap(Texture*);
         void setNormalMap(Texture*);
+        void setEmissive(Vector3);
 
         //getters for the material
-        Vector3 getDiffuse(Vector3&);
+        Vector3 getDiffuse(Ray&);
         float getDiffuseFactor(void);
         Vector3 getSpecular(void);
         float getSpecularFactor(void);
@@ -33,7 +35,9 @@ class Material
         float getReflective(void);
         float getRefraction(void);
         bool normalsAltered(void);
-        Vector3 getNormal(Vector3&);
+        Vector3 getNormal(Ray&);
+        bool isEmissive(void);
+        Vector3 getEmissiveColor(void);
 
     private:
 
@@ -44,9 +48,13 @@ class Material
         float shineness;
         float reflect;
         float refract;
+        Vector3 transparentColor;
+        float transparentFactor;
         Texture* texture;
         Texture* bumpMap;
         Texture* normalMap;
+        Vector3 emissiveColor;
+        bool emissive;
 
         Shape* owner;
 };

@@ -44,7 +44,11 @@ class SceneParser
         void parseTriangle(void);
 
         void parseCamera(void);
-        void parseLight(void);
+
+        void parsePointLight(void);
+        void parseDirectionalLight(void);
+        void parseSpotlight(void);
+        void parseAreaLight(void);
 
         void parseMaterial(Shape*);
         void parseTransform(Shape*);

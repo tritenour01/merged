@@ -123,7 +123,7 @@ void Octree::createNodes(Node* current)
         computePoints(current->children[i].aabb);
 }
 
-bool Octree::intersectRay(Ray& ray, float& t)
+bool Octree::intersectRay(Ray& ray, Hitpoint& h)
 {
     Vector3& minBound = root->aabb.bounds->minCorner;
     Vector3& maxBound = root->aabb.bounds->maxCorner;
@@ -170,11 +170,11 @@ bool Octree::intersectRay(Ray& ray, float& t)
     }
 
     if(max(max(x1, y1), z1) < min(min(x2, y2), z2)){
-        t = DBL_MAX;
+        h.t = DBL_MAX;
         float Min[3] = {x1, y1, z1};
         float Max[3] = {x2, y2, z2};
 
-        return intersectSubTrees(ray, t, root, Min, Max, mask);
+        return intersectSubTrees(ray, h, root, Min, Max, mask);
         //return drawTree(ray, t, root, 0, Min, Max, mask);
     }
     return false;
@@ -196,7 +196,7 @@ bool Octree::drawTree(Ray& ray, float& t, Node* current, int depth, float* Min, 
             intersect = true;
             if(hit.t > Ray::SMALL && hit.t < t){
                 t = hit.t;
-                intersectObj = current->aabb.bounds;
+                ray.s = current->aabb.bounds;
             }
         }
         return intersect;
@@ -225,7 +225,7 @@ bool Octree::drawTree(Ray& ray, float& t, Node* current, int depth, float* Min, 
     return intersect;
 }
 
-bool Octree::intersectSubTrees(Ray& ray, float& t, Node* current, float* Min, float* Max, char mask)
+bool Octree::intersectSubTrees(Ray& ray, Hitpoint& Hit, Node* current, float* Min, float* Max, char mask)
 {
     if(current->children == NULL){
         bool intersect = false;
@@ -233,9 +233,11 @@ bool Octree::intersectSubTrees(Ray& ray, float& t, Node* current, float* Min, fl
         for(int i = 0; i < current->data.size(); i++){
             if(current->data[i]->intersectRay(ray, h)){
                 intersect = true;
-                if(h.t > Ray::SMALL && h.t < t){
-                    t = h.t;
-                    intersectObj = current->data[i];
+                if(h.t > Ray::SMALL && h.t < Hit.t){
+                    Hit.t = h.t;
+                    Hit.s = current->data[i];
+                    Hit.f1 = h.f1;
+                    Hit.f2 = h.f2;
                 }
             }
         }
@@ -310,15 +312,15 @@ bool Octree::intersectSubTrees(Ray& ray, float& t, Node* current, float* Min, fl
     for(int i = 0; i < numHit; i++)
     {
         if(ID[i] == 0)
-            temp = intersectSubTrees(ray, t, &current->children[mask], Min, Mid, mask);
+            temp = intersectSubTrees(ray, Hit, &current->children[mask], Min, Mid, mask);
         else if(ID[i] == 7)
-            temp = intersectSubTrees(ray, t, &current->children[mask ^ 7], Mid, Max, mask);
+            temp = intersectSubTrees(ray, Hit, &current->children[mask ^ 7], Mid, Max, mask);
         else
-            temp = intersectSubTrees(ray, t, &current->children[mask ^ ID[i]], otherBounds[ID[i] - 1], otherBounds[ID[i] + 5], mask);
+            temp = intersectSubTrees(ray, Hit, &current->children[mask ^ ID[i]], otherBounds[ID[i] - 1], otherBounds[ID[i] + 5], mask);
 
         if(temp){
             intersect = true;
-            if(i < numHit - 1 && t < value[i + 1])
+            if(i < numHit - 1 && Hit.t < value[i + 1])
                 break;
         }
     }
@@ -472,12 +474,12 @@ bool Octree::pointInAABB(Vector3& point, AABB& aabb)
     return true;
 }
 
-Vector3 Octree::getNormal(Vector3& p)
+Vector3 Octree::getNormal(Ray& ray)
 {
-    return intersectObj->computeNormal(p);
+    return ray.cacheShape->computeNormal(ray);
 }
 
-void Octree::getUV(Vector3& p, float& u, float& v)
+void Octree::getUV(Vector3& p, Ray& ray, float& u, float& v)
 {
-    intersectObj->getUV(p, u, v);
+    ray.cacheShape->getUV(p, ray, u, v);
 }

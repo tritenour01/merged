@@ -10,15 +10,14 @@ class Cone : public Shape
 
         Cone(Vector3, float, float);
 
-        void getUV(Vector3&, float&, float&);
+        void getUV(Vector3&, Ray&, float&, float&);
 
     private:
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
+        bool Intersection(Ray&, Hitpoint&);
+        Vector3 getNormal(Ray&);
 
         enum Sides {SIDE, BOTTOM};
-        Sides part;
 
         Vector3 base;
         float radius;

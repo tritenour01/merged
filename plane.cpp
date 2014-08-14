@@ -1,4 +1,5 @@
 #include "plane.h"
+#include "raytracer.h"
 
 //constructor for finite planes
 Plane::Plane(Vector3 c, Vector3 r, float rBound, Vector3 u, float uBound)
@@ -46,7 +47,7 @@ Plane::Plane(Vector3 c, Vector3 r, Vector3 u)
     rightBound = -1.0f;
 }
 
-bool Plane::Intersection(Ray& r, float& t)
+bool Plane::Intersection(Ray& r, Hitpoint& h)
 {
     //compute the intersection time
     float newT = -(Vector3::DotProduct(r.origin, normal) + d) / Vector3::DotProduct(r.dir, normal);
@@ -65,12 +66,12 @@ bool Plane::Intersection(Ray& r, float& t)
 
         //if its an infinite plane
         if(rightBound < 0 && upBound < 0){
-            t = newT;
+            h.t = newT;
             return true;
         }
         //its a finite plane
         if(abs(rightDist) <= rightBound && abs(upDist) <= upBound){
-            t = newT;
+            h.t = newT;
             return true;
         }
     }
@@ -79,12 +80,12 @@ bool Plane::Intersection(Ray& r, float& t)
 }
 
 //return the plane's normal
-Vector3 Plane::getNormal(Vector3& p)
+Vector3 Plane::getNormal(Ray& ray)
 {
     return normal;
 }
 
-void Plane::getUV(Vector3& point, float& u, float& v)
+void Plane::getUV(Vector3& point, Ray& ray, float& u, float& v)
 {
     u = Vector3::DotProduct(point, right);
     v = Vector3::DotProduct(point, up);

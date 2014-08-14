@@ -4,11 +4,7 @@
 #include <fstream>
 #include <vector>
 
-#include "sphere.h"
-#include "plane.h"
-#include "triangle.h"
-#include "box.h"
-#include "cylinder.h"
+#include "shape.h"
 #include "camera.h"
 #include "light.h"
 
@@ -17,39 +13,7 @@
 #include "sampler.h"
 #include "parser.h"
 
-//used to store an individual pixel
-struct pixel
-{
-    unsigned char r, g, b, a;
-
-    pixel(){}
-
-    //creates a colored pixel and clamps values with rounding
-    pixel(Vector3 color)
-    {
-        color *= 255.0f;
-        r = min((int)(color.x + 0.5f), 255);
-        g = min((int)(color.y + 0.5f), 255);
-        b = min((int)(color.z + 0.5f), 255);
-
-        //toon shading
-        //r = min((int)((truncf(((float)r / 255.0f) * 10.0f) / 9.0f) * 255.0f), 255);
-        //g = min((int)((truncf(((float)g / 255.0f) * 10.0f) / 9.0f) * 255.0f), 255);
-        //b = min((int)((truncf(((float)b / 255.0f) * 10.0f) / 9.0f) * 255.0f), 255);
-
-        //gray scale
-        //float y = 0.0;
-        //y += 0.2126 * ((float)r / 255.0f);
-        //y += 0.7152 * ((float)g / 255.0f);
-        //y += 0.0722 * ((float)b / 255.0f);
-
-        //r = min((int)(y * 255.0f), 255);
-        //g = min((int)(y * 255.0f), 255);
-        //b = min((int)(y * 255.0f), 255);
-
-        a = 255;
-    }
-};
+#include "image.h"
 
 struct Config
 {
@@ -58,6 +22,7 @@ struct Config
     float ambient;
     Vector3 backColor;
     int reflectionDepth;
+    float recursionThreshold;
 
     Camera* camera;
     Sampler* sampler;
@@ -67,17 +32,26 @@ struct Hitpoint
 {
     float t;
     Vector3 point;
+
+    Shape* s;
+    float f1;
+    float f2;
 };
 
 class Raytracer
 {
     public:
 
-        Raytracer(string);
+        Raytracer();
         ~Raytracer();
 
-        pixel* traceImage();
+        bool loadScene(string);
+
+        Vector3 tracePixel(int, int);
         Vector3 traceRay(Ray&);
+        bool intersectRay(Ray&);
+        float computeShadowFactor(Ray&, float);
+        Vector3 calculateShading(Ray&, Vector3&, Vector3&, Vector3&);
 
         int getWidth(void);
         int getHeight(void);
@@ -87,14 +61,10 @@ class Raytracer
 
     private:
 
-        void loadScene(string);
-        bool badScene;
-
-        bool intersectRay(Ray&);
-        Vector3 computeColor(Ray&, int);
+        Vector3 computeColor(Ray&, int, float);
         Vector3 calculateLight(Ray&, Vector3&);
-        Vector3 calculateReflection(Ray&, Vector3&, int);
-        Vector3 calculateRefraction(Ray&, Vector3&, int);
+        Vector3 calculateReflection(Ray&, Vector3&, int, float);
+        Vector3 calculateRefraction(Ray&, Vector3&, int, float);
 
         vector<Shape*> objects;
         vector<Light*> lights;

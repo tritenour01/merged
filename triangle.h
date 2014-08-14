@@ -12,7 +12,7 @@ class Triangle : public Shape
         Triangle(Vector3*, Vector3*, Vector3*, bool);
 
         void setUV(Vector3, Vector3, Vector3);
-        void getUV(Vector3&, float&, float&);
+        void getUV(Vector3&, Ray&, float&, float&);
 
         Vector3 getPlanarNormal(void);
 
@@ -24,8 +24,8 @@ class Triangle : public Shape
 
     private:
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
+        bool Intersection(Ray&, Hitpoint&);
+        Vector3 getNormal(Ray&);
 
         Vector3 n;
 
@@ -38,8 +38,6 @@ class Triangle : public Shape
         Vector3 tex1;
         Vector3 tex2;
         Vector3 tex3;
-
-        float u, v;
 
         bool destroy;
         bool smooth;

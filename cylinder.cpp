@@ -8,7 +8,7 @@ Cylinder::Cylinder(Vector3 newBase, float newHeight, float newRadius)
     radius = newRadius;
 }
 
-bool Cylinder::Intersection(Ray& ray, float& t)
+bool Cylinder::Intersection(Ray& ray, Hitpoint& h)
 {
     Vector3 o = ray.origin;
     Vector3 d = ray.dir;
@@ -36,7 +36,7 @@ bool Cylinder::Intersection(Ray& ray, float& t)
         maxT = c1;
     }
 
-    part = SIDE;
+    h.f1 = (float)SIDE;
 
     float minY, maxY;
     if(d.y <= 0){
@@ -47,7 +47,7 @@ bool Cylinder::Intersection(Ray& ray, float& t)
 
         if(minY > minT){
             minT = minY;
-            part = TOP;
+            h.f1 = (float)TOP;
         }
 
         maxY = (base.y - o.y) / d.y;
@@ -63,7 +63,7 @@ bool Cylinder::Intersection(Ray& ray, float& t)
 
         if(minY > minT){
             minT = minY;
-            part = BOTTOM;
+            h.f1 = (float)BOTTOM;
         }
 
         maxY = (base.y + height - o.y) / d.y;
@@ -72,34 +72,34 @@ bool Cylinder::Intersection(Ray& ray, float& t)
             return false;
     }
 
-    t = minT;
+    h.t = minT;
     return true;
 }
 
-Vector3 Cylinder::getNormal(Vector3& r)
+Vector3 Cylinder::getNormal(Ray& ray)
 {
     Vector3 result;
-    if(part == TOP)
+    if((PART_ID)ray.cacheFloat1 == TOP)
         result = Vector3(0.0, 1.0, 0.0);
-    else if(part == BOTTOM)
+    else if((PART_ID)ray.cacheFloat1 == BOTTOM)
         result = Vector3(0.0, -1.0, 0.0);
 
-    if(isTransformed && part == SIDE){
+    if(isTransformed && (PART_ID)ray.cacheFloat1 == SIDE){
         Vector3 newPoint;
-        Matrix4x4::transformPoint(invTrans, newPoint, r);
+        Matrix4x4::transformPoint(invTrans, newPoint, ray.point);
         result = newPoint - base;
         result.y = 0.0f;
     }
-    else if(part == SIDE){
-        result = r - base;
+    else if((PART_ID)ray.cacheFloat1 == SIDE){
+        result = ray.point - base;
         result.y = 0.0f;
     }
     return result;
 }
 
-void Cylinder::getUV(Vector3& point, float& u, float& v)
+void Cylinder::getUV(Vector3& point, Ray& ray, float& u, float& v)
 {
-    if(part == SIDE){
+    if((PART_ID)ray.cacheFloat1 == SIDE){
         Vector3 n = point - base;
         v = n.y / height;
         n.normalize();

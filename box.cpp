@@ -1,4 +1,5 @@
 #include "box.h"
+#include "raytracer.h"
 
 Box::Box(Vector3 bound1, Vector3 bound2)
 {
@@ -7,7 +8,7 @@ Box::Box(Vector3 bound1, Vector3 bound2)
     maxCorner = bound2;
 }
 
-bool Box::Intersection(Ray& ray, float& t)
+bool Box::Intersection(Ray& ray, Hitpoint& h)
 {
     //min and max times in overlap interval
     float tMin = 0.0f;
@@ -30,7 +31,7 @@ bool Box::Intersection(Ray& ray, float& t)
         //check and set new interval minimum
         if(xMin > tMin){
             tMin = xMin;
-            side = LEFT;
+            h.f1 = (float)LEFT;
         }
 
         xMax = (maxCorner.x - P.x) / D.x;
@@ -53,7 +54,7 @@ bool Box::Intersection(Ray& ray, float& t)
         //check and set new interval minimum
         if(xMin > tMin){
             tMin = xMin;
-            side = RIGHT;
+            h.f1 = (float)RIGHT;
         }
 
         xMax = (minCorner.x - P.x) / D.x;
@@ -78,7 +79,7 @@ bool Box::Intersection(Ray& ray, float& t)
         //check and set new interval minimum
         if(yMin > tMin){
             tMin = yMin;
-            side = BOTTOM;
+            h.f1 = (float)BOTTOM;
         }
 
         yMax = (maxCorner.y - P.y) / D.y;
@@ -101,7 +102,7 @@ bool Box::Intersection(Ray& ray, float& t)
         //check and set new interval minimum
         if(yMin > tMin){
             tMin = yMin;
-            side = TOP;
+            h.f1 = (float)TOP;
         }
 
         yMax = (minCorner.y - P.y) / D.y;
@@ -126,7 +127,7 @@ bool Box::Intersection(Ray& ray, float& t)
         //check and set new interval minimum
         if(zMin > tMin){
             tMin = zMin;
-            side = FRONT;
+            h.f1 = (float)FRONT;
         }
 
         zMax = (maxCorner.z - P.z) / D.z;
@@ -149,7 +150,7 @@ bool Box::Intersection(Ray& ray, float& t)
         //check and set new interval minimum
         if(zMin > tMin){
             tMin = zMin;
-            side = BACK;
+            h.f1 = (float)BACK;
         }
 
         zMax = (minCorner.z - P.z) / D.z;
@@ -163,14 +164,14 @@ bool Box::Intersection(Ray& ray, float& t)
             tMax = zMax;
     }
 
-    t = tMin;
+    h.t = tMin;
     return true;
 }
 
-Vector3 Box::getNormal(Vector3& p)
+Vector3 Box::getNormal(Ray& ray)
 {
     //determine the normal based on the intersection side
-    switch(side){
+    switch((SIDE_ID)ray.cacheFloat1){
         case LEFT:
             return Vector3(-1.0f, 0.0f, 0.0f);
         case RIGHT:
@@ -186,9 +187,9 @@ Vector3 Box::getNormal(Vector3& p)
     }
 }
 
-void Box::getUV(Vector3& point, float& u, float& v)
+void Box::getUV(Vector3& point, Ray& ray, float& u, float& v)
 {
-    switch(side){
+    switch((SIDE_ID)ray.cacheFloat1){
         case LEFT:
             u = (maxCorner.z - point.z) / (maxCorner.z - minCorner.z);
             v = (point.y - minCorner.y) / (maxCorner.y - minCorner.y);

@@ -21,11 +21,15 @@ class Ray
         Vector3 origin;
         Vector3 dir;
 
-        static const float SMALL = 0.0005f;
+        static constexpr float SMALL = 0.0005f;
 
         float t;
         Shape* s;
         Vector3 point;
+
+        Shape* cacheShape;
+        float cacheFloat1;
+        float cacheFloat2;
 };
 
 #endif // RAY_H_INCLUDED

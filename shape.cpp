@@ -9,7 +9,7 @@ bool Shape::intersectRay(Ray& ray, Hitpoint& hit)
         Ray newRay;
         Matrix4x4::transformPoint(invTrans, newRay.origin, ray.origin);
         Matrix4x4::transformDirection(invTrans, newRay.dir, ray.dir);
-        if(this->Intersection(newRay, hit.t)){
+        if(this->Intersection(newRay, hit)){
             Vector3 point;
             point = newRay.origin + hit.t * newRay.dir;
             Matrix4x4::transformPoint(trans, hit.point, point);
@@ -17,19 +17,19 @@ bool Shape::intersectRay(Ray& ray, Hitpoint& hit)
         }
         return false;
     }
-    if(this->Intersection(ray, hit.t)){
+    if(this->Intersection(ray, hit)){
         hit.point = ray.origin + hit.t * ray.dir;
         return true;
     }
     return false;
 }
 
-Vector3 Shape::computeNormal(Vector3& point)
+Vector3 Shape::computeNormal(Ray& ray)
 {
     if(material.normalsAltered()){
-        Vector3 bumpNormal = material.getNormal(point);
+        Vector3 bumpNormal = material.getNormal(ray);
         bumpNormal.normalize();
-        Vector3 objectNormal = this->getNormal(point);
+        Vector3 objectNormal = this->getNormal(ray);
 
         Vector3 tangent;
         if(fabs(objectNormal.x) >= Ray::SMALL || fabs(objectNormal.z) >= Ray::SMALL)
@@ -69,7 +69,7 @@ Vector3 Shape::computeNormal(Vector3& point)
         return newNormal;
     }
 
-    Vector3 n = this->getNormal(point);
+    Vector3 n = this->getNormal(ray);
     if(isTransformed){
         Vector3 transformNormal;
         Matrix4x4::transformDirection(normalTrans, transformNormal, n);

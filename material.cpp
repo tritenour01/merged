@@ -12,6 +12,7 @@ Material::Material(Shape* o) : owner(o)
     texture = NULL;
     bumpMap = NULL;
     normalMap = NULL;
+    emissive = false;
 }
 
 void Material::setDiffuse(Vector3 d)
@@ -64,18 +65,24 @@ void Material::setNormalMap(Texture* n)
     normalMap = n;
 }
 
-Vector3 Material::getDiffuse(Vector3& point)
+void Material::setEmissive(Vector3 c)
+{
+    emissiveColor = c;
+    emissive = true;
+}
+
+Vector3 Material::getDiffuse(Ray& ray)
 {
     if(texture){
         float u = 0.0f, v = 0.0f;
         if(owner->transformed()){
             Vector3 newPoint;
             Matrix4x4 invTrans = owner->getInvTrans();
-            Matrix4x4::transformPoint(invTrans, newPoint, point);
-            owner->getUV(newPoint, u, v);
+            Matrix4x4::transformPoint(invTrans, newPoint, ray.point);
+            owner->getUV(newPoint, ray, u, v);
         }
         else
-            owner->getUV(point, u, v);
+            owner->getUV(ray.point, ray, u, v);
         return texture->sampleTexture(u, v);
     }
     return diffuseColor;
@@ -118,18 +125,18 @@ bool Material::normalsAltered(void)
     return (bumpMap != NULL || normalMap != NULL);
 }
 
-Vector3 Material::getNormal(Vector3& point)
+Vector3 Material::getNormal(Ray& ray)
 {
     if(bumpMap){
         float u = 0.0f, v = 0.0f;
         if(owner->transformed()){
             Vector3 newPoint;
             Matrix4x4 invTrans = owner->getInvTrans();
-            Matrix4x4::transformPoint(invTrans, newPoint, point);
-            owner->getUV(newPoint, u, v);
+            Matrix4x4::transformPoint(invTrans, newPoint, ray.point);
+            owner->getUV(newPoint, ray, u, v);
         }
         else
-            owner->getUV(point, u, v);
+            owner->getUV(ray.point, ray, u, v);
         return bumpMap->sampleBump(u, v);
     }
     if(normalMap){
@@ -137,12 +144,22 @@ Vector3 Material::getNormal(Vector3& point)
         if(owner->transformed()){
             Vector3 newPoint;
             Matrix4x4 invTrans = owner->getInvTrans();
-            Matrix4x4::transformPoint(invTrans, newPoint, point);
-            owner->getUV(newPoint, u, v);
+            Matrix4x4::transformPoint(invTrans, newPoint, ray.point);
+            owner->getUV(newPoint, ray, u, v);
         }
         else
-            owner->getUV(point, u, v);
+            owner->getUV(ray.point, ray, u, v);
         return normalMap->sampleNormal(u, v);
     }
     return Vector3(0, 0, 0);
+}
+
+bool Material::isEmissive(void)
+{
+    return emissive;
+}
+
+Vector3 Material::getEmissiveColor(void)
+{
+    return emissiveColor;
 }

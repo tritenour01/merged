@@ -12,38 +12,38 @@ Mesh::Mesh(std::vector<Triangle*>* t, std::vector<Vector3>* p)
     }
 }
 
-bool Mesh::Intersection(Ray& ray, float& t)
+bool Mesh::Intersection(Ray& ray, Hitpoint& hit)
 {
     if(useOctree){
-        return data->intersectRay(ray, t);
+        return data->intersectRay(ray, hit);
     }
     else{
         float minT = FLT_MAX;
         Hitpoint h;
-        bool hit = false;
+        bool ret = false;
         for(int i = 0; i < triangles->size(); i++){
             if(triangles->at(i)->intersectRay(ray, h)){
                 if(h.t < minT && h.t >= Ray::SMALL){
                     minT = h.t;
                     intersectIndex = i;
                 }
-                hit = true;
+                ret = true;
             }
         }
-        t = minT;
-        return hit;
+        hit.t = minT;
+        return ret;
     }
 }
 
-Vector3 Mesh::getNormal(Vector3& p)
+Vector3 Mesh::getNormal(Ray& p)
 {
     if(useOctree)
         return data->getNormal(p);
     return triangles->at(intersectIndex)->computeNormal(p);
 }
 
-void Mesh::getUV(Vector3& point, float& u, float& v)
+void Mesh::getUV(Vector3& point, Ray& ray, float& u, float& v)
 {
     if(useOctree)
-        data->getUV(point, u, v);
+        data->getUV(point, ray, u, v);
 }

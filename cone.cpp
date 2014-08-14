@@ -1,4 +1,5 @@
 #include "cone.h"
+#include "raytracer.h"
 
 Cone::Cone(Vector3 newBase, float newHeight, float newRad)
 {
@@ -7,7 +8,7 @@ Cone::Cone(Vector3 newBase, float newHeight, float newRad)
     height = newHeight;
 }
 
-bool Cone::Intersection(Ray& ray, float& t)
+bool Cone::Intersection(Ray& ray, Hitpoint& h)
 {
     Vector3 o = ray.origin;
     Vector3 d = ray.dir;
@@ -37,7 +38,7 @@ bool Cone::Intersection(Ray& ray, float& t)
         maxT = t1;
     }
 
-    part = SIDE;
+    h.f1 = (float)SIDE;
 
     if(d.y <= 0.0f){
         float minY = (base.y + height - o.y) / d.y;
@@ -58,7 +59,7 @@ bool Cone::Intersection(Ray& ray, float& t)
 
         if(minY > minT){
             minT = minY;
-            part = BOTTOM;
+            h.f1 = (float)BOTTOM;
         }
 
         float maxY = (base.y + height - o.y) / d.y;
@@ -67,23 +68,23 @@ bool Cone::Intersection(Ray& ray, float& t)
             return false;
     }
 
-    t = minT;
+    h.t = minT;
     return true;
 }
 
-Vector3 Cone::getNormal(Vector3& p)
+Vector3 Cone::getNormal(Ray& ray)
 {
-    if(part == SIDE){
-        Vector3 toPoint = base + Vector3(0, height, 0) - p;
+    if((Sides)ray.cacheFloat1 == SIDE){
+        Vector3 toPoint = base + Vector3(0, height, 0) - ray.point;
         return Vector3::CrossProduct(Vector3::CrossProduct(toPoint, Vector3(0, 1, 0)), toPoint);
     }
     else
         return Vector3(0, -1, 0);
 }
 
-void Cone::getUV(Vector3& point, float& u, float& v)
+void Cone::getUV(Vector3& point, Ray& ray, float& u, float& v)
 {
-    if(part == SIDE){
+    if((Sides)ray.cacheFloat1 == SIDE){
         Vector3 n = point - base;
         v = n.y / height;
         n.normalize();

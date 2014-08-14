@@ -12,15 +12,14 @@ class Cylinder : public Shape
 
         Cylinder(Vector3, float, float);
 
-        void getUV(Vector3&, float&, float&);
+        void getUV(Vector3&, Ray&, float&, float&);
 
     private:
 
-        bool Intersection(Ray&, float&);
-        Vector3 getNormal(Vector3&);
+        bool Intersection(Ray&, Hitpoint&);
+        Vector3 getNormal(Ray&);
 
         enum PART_ID {SIDE, TOP, BOTTOM};
-        PART_ID part;
 
         Vector3 base;
         float height;

@@ -30,9 +30,9 @@ class Octree
 
         Octree(int, int);
         void createTree(vector<Triangle*>*);
-        bool intersectRay(Ray&, float&);
-        Vector3 getNormal(Vector3&);
-        void getUV(Vector3&, float&, float&);
+        bool intersectRay(Ray&, Hitpoint&);
+        Vector3 getNormal(Ray&);
+        void getUV(Vector3&, Ray&, float&, float&);
 
     private:
 
@@ -48,15 +48,13 @@ class Octree
         void computeBounds(vector<Triangle*>, Vector3&, Vector3&);
         void computePoints(AABB&);
 
-        bool intersectSubTrees(Ray&, float&, Node*, float*, float*, char);
+        bool intersectSubTrees(Ray&, Hitpoint&, Node*, float*, float*, char);
 
         bool drawTree(Ray&, float&, Node*, int, float*, float*, char);
 
         Node* root;
         int maxData;
         int maxDepth;
-
-        Shape* intersectObj;
 
         const int d = 10;
 };

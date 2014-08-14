@@ -1,4 +1,5 @@
 #include "triangle.h"
+#include "raytracer.h"
 
 Triangle::Triangle(Vector3* a, Vector3* b, Vector3* c, bool d)
 {
@@ -32,7 +33,7 @@ void Triangle::setNormals(Vector3 n1, Vector3 n2, Vector3 n3)
     smooth = true;
 }
 
-bool Triangle::Intersection(Ray& ray, float& t)
+bool Triangle::Intersection(Ray& ray, Hitpoint& h)
 {
     //compute the intersection time
     float newT = -(Vector3::DotProduct(ray.origin, n) + dist) / Vector3::DotProduct(ray.dir, n);
@@ -57,19 +58,19 @@ bool Triangle::Intersection(Ray& ray, float& t)
 
         //compute u and v
         float f = 1.0f / (d11 * d22 - d12 * d12);
-        u = (d22 * d13 - d12 * d23) * f;
+        h.f1 = (d22 * d13 - d12 * d23) * f;
 
         //determine if u is invalid
-        if(u < 0.0f)
+        if(h.f1 < 0.0f)
             return false;
 
-        v = (d11 * d23 - d12 * d13) * f;
+        h.f2 = (d11 * d23 - d12 * d13) * f;
 
         // determine if u and v are invalid
-        if(v < 0.0f || u + v >= 1.0f)
+        if(h.f2 < 0.0f || h.f1 + h.f2 >= 1.0f)
             return false;
 
-        t = newT;
+        h.t = newT;
         return true;
     }
 
@@ -82,19 +83,19 @@ Vector3 Triangle::getPlanarNormal(void)
 }
 
 //return the triangle's planar normal
-Vector3 Triangle::getNormal(Vector3& p)
+Vector3 Triangle::getNormal(Ray& ray)
 {
     if(smooth)
-        return (1-u-v) * N1 + u * N2 + v * N3;
+        return (1-ray.cacheFloat1-ray.cacheFloat2) * N1 + ray.cacheFloat1 * N2 + ray.cacheFloat2 * N3;
     else
         return n;
 }
 
 //the shadow rays are fucking up u and v
-void Triangle::getUV(Vector3& point, float& U, float& V)
+void Triangle::getUV(Vector3& point, Ray& ray, float& U, float& V)
 {
-    U = (1-u-v) * tex1.x + u * tex2.x + v * tex3.x;
-    V = (1-u-v) * tex1.y + u * tex2.y + v * tex3.y;
+    U = (1-ray.cacheFloat1-ray.cacheFloat2) * tex1.x + ray.cacheFloat1 * tex2.x + ray.cacheFloat2 * tex3.x;
+    V = (1-ray.cacheFloat1-ray.cacheFloat2) * tex1.y + ray.cacheFloat1 * tex2.y + ray.cacheFloat2 * tex3.y;
 }
 
 void Triangle::setUV(Vector3 t1, Vector3 t2, Vector3 t3)
