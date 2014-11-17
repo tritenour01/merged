@@ -16,7 +16,7 @@ class Triangle : public Shape
 
         Vector3 getPlanarNormal(void);
 
-        void setNormals(Vector3, Vector3, Vector3);
+        void setNormals(Vector3*, Vector3*, Vector3*);
 
         Vector3* p1;
         Vector3* p2;
@@ -29,9 +29,9 @@ class Triangle : public Shape
 
         Vector3 n;
 
-        Vector3 N1;
-        Vector3 N2;
-        Vector3 N3;
+        Vector3* N1;
+        Vector3* N2;
+        Vector3* N3;
 
         float dist;
 

@@ -38,96 +38,60 @@ void compute(Node* d)
 
 void Octree::createTree(vector<Triangle*>* newData)
 {
-    AABB aabb;
-    Vector3 minBound;
-    Vector3 maxBound;
     computeBounds(*newData, minBound, maxBound);
-    aabb.bounds = new Box(minBound, maxBound);
-    computePoints(aabb);
 
     root = new Node;
     root->children = NULL;
     root->parent = NULL;
-    root->aabb = aabb;
 
-    for(int i = 0; i < newData->size(); i++)
-        insertTriangle(newData->at(i), root, 1);
+    insertTriangles(*newData, minBound, maxBound, root, 1);
 
     compute(root);
+
+    cout<<minBound<<maxBound<<endl;
 }
 
-void Octree::insertTriangle(Triangle* triangle, Node* current, int depth)
+void Octree::insertTriangles(vector<Triangle*>& triangles, Vector3 minCorner, Vector3 maxCorner, Node* current, int depth)
 {
-    if(current->children != NULL){
-        for(int i = 0; i < 8; i++){
-            if(triangleAABBIntersect(triangle, current->children[i].aabb))
-                insertTriangle(triangle, &current->children[i], depth + 1);
-        }
+    if(depth >= maxDepth || triangles.size() <= maxData){
+        for(int i = 0; i < triangles.size(); i++)
+            current->data.push_back(triangles[i]);
+        return;
     }
-    else{
-        current->data.push_back(triangle);
-        if(current->data.size() > maxData && depth < maxDepth){
-            createNodes(current);
-            int num = current->data.size();
-            for(int j = 0; j < num; j++){
-                Triangle* t = current->data.back();
-                current->data.pop_back();
-                for(int i = 0; i < 8; i++){
-                    if(triangleAABBIntersect(t, current->children[i].aabb))
-                        insertTriangle(t, &current->children[i], depth + 1);
-                }
-            }
-        }
-    }
-}
 
-void Octree::createNodes(Node* current)
-{
     current->children = new Node[8];
     for(int i = 0; i < 8; i++){
         current->children[i].children = NULL;
         current->children[i].parent = current;
     }
 
-    Vector3& minBound = current->aabb.bounds->minCorner;
-    Vector3& maxBound = current->aabb.bounds->maxCorner;
+    Vector3 midPoint = (minCorner + maxCorner) * 0.5;
 
-    Vector3 midPoint = (minBound + maxBound) * 0.5;
+    float bounds[15][3] = {{minCorner[0], minCorner[1], minCorner[2]}, {midPoint[0], minCorner[1], minCorner[2]}, {minCorner[0], minCorner[1], midPoint[2]},
+                            {midPoint[0], minCorner[1], midPoint[2]}, {minCorner[0], midPoint[1], minCorner[2]}, {midPoint[0], midPoint[1], minCorner[2]},
+                            {minCorner[0], midPoint[1], midPoint[2]}, {midPoint[0], midPoint[1], midPoint[2]}, {maxCorner[0], midPoint[1], midPoint[2]},
+                            {midPoint[0], midPoint[1], maxCorner[2]}, {maxCorner[0], midPoint[1], maxCorner[2]}, {midPoint[0], maxCorner[1], midPoint[2]},
+                            {maxCorner[0], maxCorner[1], midPoint[2]}, {midPoint[0], maxCorner[1], maxCorner[2]}, {maxCorner[0], maxCorner[1], maxCorner[2]}};
 
-    current->children[0].aabb.bounds = new Box(minBound, midPoint);
+    Vector3 points[8][8];
+    for(int i = 0; i < 8; i++)
+        computePoints(points[i], bounds[i], bounds[i + 7]);
 
-    current->children[1].aabb.bounds = new Box(Vector3(midPoint.x, minBound.y, minBound.z),
-                                                Vector3(maxBound.x, midPoint.y, midPoint.z));
-
-    current->children[2].aabb.bounds = new Box(Vector3(minBound.x, minBound.y, midPoint.z),
-                                                Vector3(midPoint.x, midPoint.y, maxBound.z));
-
-    current->children[3].aabb.bounds = new Box(Vector3(midPoint.x, minBound.y, midPoint.z),
-                                                  Vector3(maxBound.x, midPoint.y, maxBound.z));
-
-    current->children[4].aabb.bounds = new Box (Vector3(minBound.x, midPoint.y, minBound.z),
-                                                 Vector3(midPoint.x, maxBound.y, midPoint.z));
-
-    current->children[4].aabb.bounds = new Box(Vector3(minBound.x, midPoint.y, minBound.z),
-                                                Vector3(midPoint.x, maxBound.y, midPoint.z));
-
-    current->children[5].aabb.bounds = new Box(Vector3(midPoint.x, midPoint.y, minBound.z),
-                                                Vector3(maxBound.x, maxBound.y, midPoint.z));
-
-    current->children[6].aabb.bounds = new Box(Vector3(minBound.x, midPoint.y, midPoint.z),
-                                                Vector3(midPoint.x, maxBound.y, maxBound.z));
-
-    current->children[7].aabb.bounds = new Box(midPoint, maxBound);
+    vector<Triangle*> groups[8];
+    vector<Triangle*>::iterator it;
+    for(it = triangles.begin(); it != triangles.end(); it++){
+        for(int j = 0; j < 8; j++){
+            if(triangleAABBIntersect(*it, points[j]))
+                groups[j].push_back(*it);
+        }
+    }
 
     for(int i = 0; i < 8; i++)
-        computePoints(current->children[i].aabb);
+        insertTriangles(groups[i], Vector3(bounds[i][0], bounds[i][1], bounds[i][2]), Vector3(bounds[i + 7][0], bounds[i + 7][1], bounds[i + 7][2]), &current->children[i], depth + 1);
 }
 
 bool Octree::intersectRay(Ray& ray, Hitpoint& h)
 {
-    Vector3& minBound = root->aabb.bounds->minCorner;
-    Vector3& maxBound = root->aabb.bounds->maxCorner;
-
     char mask = 0;
 
     float x1, x2, y1, y2, z1, z2;
@@ -184,7 +148,7 @@ inline bool overlap(float* Min, float* Max)
 {
     return max(max(max(Min[0], Min[1]), Min[2]), 0.0f) < min(min(Max[0], Max[1]), Max[2]);
 }
-
+/*
 bool Octree::drawTree(Ray& ray, float& t, Node* current, int depth, float* Min, float* Max, char mask)
 {
     if(current->num == 0 || !overlap(Min, Max))
@@ -224,7 +188,7 @@ bool Octree::drawTree(Ray& ray, float& t, Node* current, int depth, float* Min, 
 
     return intersect;
 }
-
+*/
 bool Octree::intersectSubTrees(Ray& ray, Hitpoint& Hit, Node* current, float* Min, float* Max, char mask)
 {
     if(current->children == NULL){
@@ -245,24 +209,24 @@ bool Octree::intersectSubTrees(Ray& ray, Hitpoint& Hit, Node* current, float* Mi
     }
 
     float midX = 0.0f;
-    if(Min[0] > -DBL_MAX)
+    //if(Min[0] > -DBL_MAX)
         midX = (Min[0] + Max[0]) / 2.0;
-    else{
-        if(ray.origin.x < (current->aabb.bounds->minCorner.x + current->aabb.bounds->maxCorner.x) / 2.0f)
-            midX = DBL_MAX;
-        else
-            midX = -DBL_MAX;
-    }
+    //else{
+    //    if(ray.origin.x < (current->aabb.bounds->minCorner.x + current->aabb.bounds->maxCorner.x) / 2.0f)
+    //        midX = DBL_MAX;
+    //    else
+    //        midX = -DBL_MAX;
+    //}
     float midY = (Min[1] + Max[1]) / 2.0;
     float midZ = 0.0f;
-    if(Min[2] > -DBL_MAX)
+    //if(Min[2] > -DBL_MAX)
         midZ = (Min[2] + Max[2]) / 2.0;
-    else{
-        if(ray.origin.x < (current->aabb.bounds->minCorner.z + current->aabb.bounds->maxCorner.z) / 2.0f)
-            midZ = DBL_MAX;
-        else
-            midZ = -DBL_MAX;
-    }
+    //else{
+    //    if(ray.origin.x < (current->aabb.bounds->minCorner.z + current->aabb.bounds->maxCorner.z) / 2.0f)
+    //        midZ = DBL_MAX;
+    //    else
+    //        midZ = -DBL_MAX;
+    //}
     float Mid[3] = {midX, midY, midZ};
 
     float otherBounds[12][3] = {{Mid[0], Min[1], Min[2]}, {Min[0], Min[1], Mid[2]}, {Mid[0], Min[1], Mid[2]},
@@ -362,33 +326,31 @@ void Octree::computeBounds(vector<Triangle*> triangles, Vector3& minBound, Vecto
     maxBound += Vector3(0.01, 0.01, 0.01);
 }
 
-void Octree::computePoints(AABB& aabb)
+void Octree::computePoints(Vector3* points, float* minCorner, float* maxCorner)
 {
-    Vector3& minBound = aabb.bounds->minCorner;
-    Vector3& maxBound = aabb.bounds->maxCorner;
-    aabb.points[0] = minBound;
-    aabb.points[1] = Vector3(minBound.x, minBound.y, maxBound.z);
-    aabb.points[2] = Vector3(minBound.x, maxBound.y, minBound.z);
-    aabb.points[3] = Vector3(minBound.x, maxBound.y, maxBound.z);
-    aabb.points[4] = Vector3(maxBound.x, minBound.y, minBound.z);
-    aabb.points[5] = Vector3(maxBound.x, minBound.y, maxBound.z);
-    aabb.points[6] = Vector3(maxBound.x, maxBound.y, minBound.z);
-    aabb.points[7] = maxBound;
+    points[0] = Vector3(minCorner[0], minCorner[1], minCorner[2]);
+    points[1] = Vector3(minCorner[0], minCorner[1], maxCorner[2]);
+    points[2] = Vector3(minCorner[0], maxCorner[1], minCorner[2]);
+    points[3] = Vector3(minCorner[0], maxCorner[1], maxCorner[2]);
+    points[4] = Vector3(maxCorner[0], minCorner[1], minCorner[2]);
+    points[5] = Vector3(maxCorner[0], minCorner[1], maxCorner[2]);
+    points[6] = Vector3(maxCorner[0], maxCorner[1], minCorner[2]);
+    points[7] = Vector3(maxCorner[0], maxCorner[1], maxCorner[2]);
 }
 
-bool Octree::triangleAABBIntersect(Triangle* triangle, AABB& aabb)
+bool Octree::triangleAABBIntersect(Triangle* triangle, Vector3* points)
 {
     Vector3& p1 = *triangle->p1;
     Vector3& p2 = *triangle->p2;
     Vector3& p3 = *triangle->p3;
-    if(pointInAABB(p1, aabb) || pointInAABB(p2, aabb) || pointInAABB(p3, aabb))
+    if(pointInAABB(p1, points[0], points[7]) || pointInAABB(p2, points[0], points[7]) || pointInAABB(p3, points[0], points[7]))
         return true;
 
     Vector3 axis[3] = {Vector3(1, 0, 0), Vector3(0, 1, 0), Vector3(0, 0, 1)};
     float t1, t2, s1, s2;
     for(int i = 0; i < 3; i++){
         projectTriangle(triangle, axis[i], t1, t2);
-        projectAABB(i, aabb, axis[i], s1, s2);
+        projectAABB(i, points, axis[i], s1, s2);
         if(!intervalsOverlap(t1, t2, s1, s2)){
             return false;
         }
@@ -396,7 +358,7 @@ bool Octree::triangleAABBIntersect(Triangle* triangle, AABB& aabb)
 
     Vector3 n = triangle->getPlanarNormal();
     projectTriangle(triangle, n, t1, t2);
-    projectAABB(3, aabb, n, s1, s2);
+    projectAABB(3, points, n, s1, s2);
     if(!intervalsOverlap(t1, t2, s1, s2))
         return false;
 
@@ -405,7 +367,7 @@ bool Octree::triangleAABBIntersect(Triangle* triangle, AABB& aabb)
         for(int j = 0; j < 3; j++){
             Vector3 newAxis = Vector3::CrossProduct(axis[i], edges[j]);
             projectTriangle(triangle, newAxis, t1, t2);
-            projectAABB(3, aabb, newAxis, s1, s2);
+            projectAABB(3, points, newAxis, s1, s2);
             if(!intervalsOverlap(t1, t2, s1, s2))
                 return false;
         }
@@ -429,28 +391,28 @@ void Octree::projectTriangle(Triangle* triangle, Vector3& axis, float& t1, float
     t2 = max(t2, nextT);
 }
 
-void Octree::projectAABB(int type, AABB& aabb, Vector3& axis, float& t1, float& t2)
+void Octree::projectAABB(int type, Vector3* points, Vector3& axis, float& t1, float& t2)
 {
     if(type == 0){
-        t1 = aabb.points[0].x;
-        t2 = aabb.points[7].x;
+        t1 = points[0].x;
+        t2 = points[7].x;
         return;
     }
     else if(type == 1){
-        t1 = aabb.points[0].y;
-        t2 = aabb.points[7].y;
+        t1 = points[0].y;
+        t2 = points[7].y;
         return;
     }
     else if(type == 2){
-        t1 = aabb.points[0].z;
-        t2 = aabb.points[7].z;
+        t1 = points[0].z;
+        t2 = points[7].z;
         return;
     }
-    t1 = Vector3::DotProduct(aabb.points[0], axis);
+    t1 = Vector3::DotProduct(points[0], axis);
     t2 = t1;
     float nextT;
     for(int i = 1; i < 8; i++){
-        nextT = Vector3::DotProduct(aabb.points[i], axis);
+        nextT = Vector3::DotProduct(points[i], axis);
         t1 = min(t1, nextT);
         t2 = max(t2, nextT);
     }
@@ -463,13 +425,11 @@ bool Octree::intervalsOverlap(float t1, float t2, float s1, float s2)
     return true;
 }
 
-bool Octree::pointInAABB(Vector3& point, AABB& aabb)
+bool Octree::pointInAABB(Vector3& point, Vector3& minCorner, Vector3& maxCorner)
 {
-    Vector3& minBound = aabb.bounds->minCorner;
-    Vector3& maxBound = aabb.bounds->maxCorner;
-    if(point.x < minBound.x || point.x > maxBound.x ||
-       point.y < minBound.y || point.y > maxBound.y ||
-       point.z < minBound.z || point.z > maxBound.z)
+    if(point.x < minCorner.x || point.x > maxCorner.x ||
+       point.y < minCorner.y || point.y > maxCorner.y ||
+       point.z < minCorner.z || point.z > maxCorner.z)
         return false;
     return true;
 }

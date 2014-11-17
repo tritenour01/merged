@@ -25,7 +25,7 @@ Triangle::Triangle(Vector3* a, Vector3* b, Vector3* c, bool d)
     smooth = false;
 }
 
-void Triangle::setNormals(Vector3 n1, Vector3 n2, Vector3 n3)
+void Triangle::setNormals(Vector3* n1, Vector3* n2, Vector3* n3)
 {
     N1 = n1;
     N2 = n2;
@@ -57,7 +57,11 @@ bool Triangle::Intersection(Ray& ray, Hitpoint& h)
         d23 = Vector3::DotProduct(e2, e3);
 
         //compute u and v
-        float f = 1.0f / (d11 * d22 - d12 * d12);
+        float det = (d11 * d22 - d12 * d12);
+        if(det == 0.0f)
+            return false;
+
+        float f = 1.0f / det;
         h.f1 = (d22 * d13 - d12 * d23) * f;
 
         //determine if u is invalid
@@ -71,6 +75,7 @@ bool Triangle::Intersection(Ray& ray, Hitpoint& h)
             return false;
 
         h.t = newT;
+
         return true;
     }
 
@@ -86,7 +91,7 @@ Vector3 Triangle::getPlanarNormal(void)
 Vector3 Triangle::getNormal(Ray& ray)
 {
     if(smooth)
-        return (1-ray.cacheFloat1-ray.cacheFloat2) * N1 + ray.cacheFloat1 * N2 + ray.cacheFloat2 * N3;
+        return (1-ray.cacheFloat1-ray.cacheFloat2) * *N1 + ray.cacheFloat1 * *N2 + ray.cacheFloat2 * *N3;
     else
         return n;
 }

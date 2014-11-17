@@ -61,7 +61,7 @@ void Manager::basicRender(void)
     for(int i = 0; i < raytracer->getHeight(); i++){
         cout<<"\r"<<i+1<<"/"<<raytracer->getHeight()<<" rows         ";
         for(int j = 0; j < raytracer->getWidth(); j++){
-            if(i == 420 && j == 240)
+            if(i == 555 && j == 392)
                 cout<<"HERE";
             Vector3 color = raytracer->tracePixel(j, i);
             img->setPixel(j, i, color);

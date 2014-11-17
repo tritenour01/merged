@@ -21,7 +21,7 @@ class Parser
         Parser(Raytracer*);
 
         bool loadScene(string, Config&);
-        bool loadObj(string, vector<Triangle*>&, vector<Vector3>&);
+        bool loadObj(string, vector<Triangle*>&, vector<Vector3>&, vector<Vector3>&);
 
     private:
 

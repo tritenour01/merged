@@ -8,7 +8,10 @@ Material::Material(Shape* o) : owner(o)
     specularColor = Vector3(0.0f, 0.0f, 0.0f);
     shineness = 1.0f;
     reflect = 0.0f;
+    reflectColor = Vector3(1.0f, 1.0f, 1.0f);
+    glossiness = 0.0f;
     refract = 0.0f;
+    IOR = 1.0f;
     texture = NULL;
     bumpMap = NULL;
     normalMap = NULL;
@@ -45,9 +48,24 @@ void Material::setReflective(float r)
     reflect = r;
 }
 
+void Material::setReflectColor(Vector3 c)
+{
+    reflectColor = c;
+}
+
+void Material::setGlossiness(float g)
+{
+    glossiness = g;
+}
+
 void Material::setRefraction(float r)
 {
     refract = r;
+}
+
+void Material::setIOR(float ior)
+{
+    IOR = ior;
 }
 
 void Material::setTexture(Texture* t)
@@ -115,9 +133,24 @@ float Material::getReflective(void)
     return reflect;
 }
 
+Vector3 Material::getReflectColor(void)
+{
+    return reflectColor;
+}
+
+float Material::getGlossiness(void)
+{
+    return glossiness;
+}
+
 float Material::getRefraction(void)
 {
     return refract;
+}
+
+float Material::getIOR(void)
+{
+    return IOR;
 }
 
 bool Material::normalsAltered(void)

@@ -1,10 +1,11 @@
 #include "mesh.h"
 #include "raytracer.h"
 
-Mesh::Mesh(std::vector<Triangle*>* t, std::vector<Vector3>* p)
+Mesh::Mesh(std::vector<Triangle*>* t, std::vector<Vector3>* p, std::vector<Vector3>* n)
 {
     triangles = t;
     points = p;
+    normals = n;
 
     if(useOctree){
         data = new Octree(10, 10);

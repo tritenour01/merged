@@ -22,13 +22,14 @@ void trimString( string & str ) {
     str.erase(location + 1);
 }
 
-bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>& points)
+bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>& points, vector<Vector3>& normals)
 {
     cout<<"loading mesh: "<<fileName<<endl;
-    vector<Vector3> normals;
     vector<Vector3> texCoords;
     vector<float> texU;
     vector<float> texV;
+
+    int sp = points.capacity();
 
     int nFaces = 0;
 
@@ -112,12 +113,15 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                         int n1 = faceNormal[1];
                         int n2 = faceNormal[2];
 
-                        int tc0 = faceTex[0];
-                        int tc1 = faceTex[1];
-                        int tc2 = faceTex[2];
+                        int tc0, tc1, tc2;
+                        if(faceTex.size() > 3){
+                            tc0 = faceTex[0];
+                            tc1 = faceTex[1];
+                            tc2 = faceTex[2];
+                        }
                         // First face
                         Triangle* newTri = new Triangle(&points[v0], &points[v2], &points[v1], false);
-                        newTri->setNormals(normals[n0], normals[n2], normals[n1]);
+                        newTri->setNormals(&normals[n0], &normals[n2], &normals[n1]);
                         if(faceTex.size() > 3)
                                 newTri->setUV(texCoords[tc0], texCoords[tc2], texCoords[tc1]);
                         faces.push_back(newTri);
@@ -126,17 +130,19 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                             v2 = face[i];
                             n1 = n2;
                             n2 = faceNormal[i];
-                            tc1 = tc2;
-                            tc2 = faceTex[i];
+                            if(faceTex.size() > 3){
+                                tc1 = tc2;
+                                tc2 = faceTex[i];
+                            }
                             newTri = new Triangle(&points[v0], &points[v2], &points[v1], false);
-                            newTri->setNormals(normals[n0], normals[n2], normals[n1]);
+                            newTri->setNormals(&normals[n0], &normals[n2], &normals[n1]);
                             if(faceTex.size() > 3)
                                 newTri->setUV(texCoords[tc0], texCoords[tc2], texCoords[tc1]);
                             faces.push_back(newTri);
                         }
                     } else {
                         Triangle* newTri = new Triangle(&points[face[0]], &points[face[2]], &points[face[1]], false);
-                        newTri->setNormals(normals[faceNormal[0]], normals[faceNormal[2]], normals[faceNormal[1]]);
+                        newTri->setNormals(&normals[faceNormal[0]], &normals[faceNormal[2]], &normals[faceNormal[1]]);
                         if(faceTex.size() == 3)
                             newTri->setUV(texCoords[faceTex[0]], texCoords[faceTex[2]], texCoords[faceTex[1]]);
                         faces.push_back(newTri);

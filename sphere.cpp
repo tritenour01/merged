@@ -24,7 +24,19 @@ bool Sphere::Intersection(Ray& r, Hitpoint& h)
 
     //compute closest t
     float sqrtDisc = sqrt(discriminent);
-    h.t = min((-B + sqrtDisc) / (2.0f * A), (-B - sqrtDisc) / (2.0f * A));
+    float t1 = (-B + sqrtDisc) / (2.0f * A);
+    float t2 = (-B - sqrtDisc) / (2.0f * A);
+
+    if(t1 > t2){
+        float temp = t1;
+        t1 = t2;
+        t2 = temp;
+    }
+
+    if(t1 < Ray::SMALL)
+        h.t = t2;
+    else
+        h.t = t1;
 
     return true;
 }

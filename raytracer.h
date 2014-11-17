@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <vector>
+#include <time.h>
 
 #include "shape.h"
 #include "camera.h"
@@ -23,6 +24,7 @@ struct Config
     Vector3 backColor;
     int reflectionDepth;
     float recursionThreshold;
+    int glossyReflectSampling;
 
     Camera* camera;
     Sampler* sampler;
@@ -64,7 +66,11 @@ class Raytracer
         Vector3 computeColor(Ray&, int, float);
         Vector3 calculateLight(Ray&, Vector3&);
         Vector3 calculateReflection(Ray&, Vector3&, int, float);
+        Vector3 calculateGlossyReflection(Ray&, Vector3&, int, float);
         Vector3 calculateRefraction(Ray&, Vector3&, int, float);
+        bool refractRay(Vector3&, Vector3&, Vector3&, float);
+        Vector3 calculateGlossyRefraction(Ray&, Vector3&, int, float);
+        float calculateAO(Ray&, int);
 
         vector<Shape*> objects;
         vector<Light*> lights;

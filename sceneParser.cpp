@@ -57,6 +57,12 @@ void SceneParser::parseConfig(void)
 
                 config.reflectionDepth = depth;
             }
+            else if(tokenText == "glossyReflectSampling"){
+                int sampling;
+                parseNumber(sampling);
+
+                config.glossyReflectSampling = sampling;
+            }
             else if(tokenText == "uniform"){
                 int level;
                 parseNumber(level);
@@ -245,9 +251,10 @@ void SceneParser::parseMesh(void)
     string fileName = scanner.tokenText();
     vector<Triangle*>* newMesh = new vector<Triangle*>;
     vector<Vector3>* newPoints = new vector<Vector3>;
-    parser->loadObj(fileName, *newMesh, *newPoints);
+    vector<Vector3>* newNormals = new vector<Vector3>;
+    parser->loadObj(fileName, *newMesh, *newPoints, *newNormals);
 
-    Mesh* m = new Mesh(newMesh, newPoints);
+    Mesh* m = new Mesh(newMesh, newPoints, newNormals);
     raytracer->addObject(m);
 
     advance();
@@ -490,16 +497,38 @@ void SceneParser::parseMaterial(Shape* s)
             s->getMaterial().setShineness(shineness);
         }
         else if(tokenText == "reflect"){
+            Vector3 color;
+            parseVector(color);
+
             float reflect;
             parseNumber(reflect);
 
+            s->getMaterial().setReflectColor(color);
             s->getMaterial().setReflective(reflect);
+        }
+        else if(tokenText == "glossyReflect"){
+            Vector3 color;
+            parseVector(color);
+
+            float reflect;
+            parseNumber(reflect);
+
+            float glossy;
+            parseNumber(glossy);
+
+            s->getMaterial().setReflectColor(color);
+            s->getMaterial().setReflective(reflect);
+            s->getMaterial().setGlossiness(glossy);
         }
         else if(tokenText == "refract"){
             float refract;
             parseNumber(refract);
 
+            float IOR;
+            parseNumber(IOR);
+
             s->getMaterial().setRefraction(refract);
+            s->getMaterial().setIOR(IOR);
         }
         else if(tokenText == "texture"){
             parseToken(Scanner::String);

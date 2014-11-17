@@ -11,7 +11,7 @@ class Mesh : public Shape
 {
     public:
 
-        Mesh(std::vector<Triangle*>*, std::vector<Vector3>*);
+        Mesh(std::vector<Triangle*>*, std::vector<Vector3>*, std::vector<Vector3>*);
 
         void getUV(Vector3&, Ray&, float&, float&);
 
@@ -24,6 +24,7 @@ class Mesh : public Shape
 
         std::vector<Triangle*>* triangles;
         std::vector<Vector3>* points;
+        std::vector<Vector3>* normals;
         int intersectIndex;
 
         Octree* data;

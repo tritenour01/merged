@@ -20,7 +20,10 @@ class Material
         void setSpecularFactor(float);
         void setShineness(float);
         void setReflective(float);
+        void setReflectColor(Vector3);
+        void setGlossiness(float);
         void setRefraction(float);
+        void setIOR(float);
         void setTexture(Texture*);
         void setBumpMap(Texture*);
         void setNormalMap(Texture*);
@@ -33,7 +36,10 @@ class Material
         float getSpecularFactor(void);
         float getShineness(void);
         float getReflective(void);
+        Vector3 getReflectColor(void);
+        float getGlossiness(void);
         float getRefraction(void);
+        float getIOR(void);
         bool normalsAltered(void);
         Vector3 getNormal(Ray&);
         bool isEmissive(void);
@@ -47,7 +53,10 @@ class Material
         float specularFactor;
         float shineness;
         float reflect;
+        Vector3 reflectColor;
+        float glossiness;
         float refract;
+        float IOR;
         Vector3 transparentColor;
         float transparentFactor;
         Texture* texture;

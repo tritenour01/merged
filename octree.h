@@ -9,17 +9,10 @@
 
 class Triangle;
 
-struct AABB
-{
-    Box* bounds;
-    Vector3 points[8];
-};
-
 struct Node
 {
     Node* parent;
     Node* children;
-    AABB aabb;
     vector<Triangle*> data;
     int num;
 };
@@ -36,17 +29,17 @@ class Octree
 
     private:
 
-        bool triangleAABBIntersect(Triangle*, AABB&);
+        bool triangleAABBIntersect(Triangle*, Vector3*);
         void projectTriangle(Triangle*, Vector3&, float&, float&);
-        void projectAABB(int, AABB&, Vector3&, float&, float&);
+        void projectAABB(int, Vector3*, Vector3&, float&, float&);
         bool intervalsOverlap(float, float, float, float);
-        bool pointInAABB(Vector3&, AABB&);
+        bool pointInAABB(Vector3&, Vector3&, Vector3&);
 
-        void insertTriangle(Triangle*, Node*, int);
+        void insertTriangles(vector<Triangle*>&, Vector3, Vector3, Node*, int);
         void createNodes(Node*);
 
         void computeBounds(vector<Triangle*>, Vector3&, Vector3&);
-        void computePoints(AABB&);
+        void computePoints(Vector3*, float*, float*);
 
         bool intersectSubTrees(Ray&, Hitpoint&, Node*, float*, float*, char);
 
@@ -55,6 +48,9 @@ class Octree
         Node* root;
         int maxData;
         int maxDepth;
+
+        Vector3 minBound;
+        Vector3 maxBound;
 
         const int d = 10;
 };
