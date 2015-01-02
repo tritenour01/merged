@@ -77,12 +77,12 @@ void Loader::parseConfig(void)
                 int level;
                 parseNumber(level);
 
-                float threshold;
-                parseNumber(threshold);
+                float threshold[3];
+                parseVector(threshold);
 
                 data->scene.antialiasing.type = "adaptive";
                 data->scene.antialiasing.sampling = level;
-                data->scene.antialiasing.threshold = threshold;
+                data->scene.antialiasing.threshold = threshold[0];
             }
             else if(tokenText == "camera"){
                 parseCamera();

@@ -9,6 +9,7 @@ editWidget::editWidget(fileManager* m, QMainWindow* mw)
     editArea = new QTextEdit();
     connect(editArea, SIGNAL(textChanged()), window::getInstance(), SLOT(fileEdited()));
     layout->addWidget(editArea);
+    layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 }
 

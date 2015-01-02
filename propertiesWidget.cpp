@@ -6,7 +6,8 @@ PropertiesWidget::PropertiesWidget(fileManager* m, QString name, QMainWindow* w)
 {
     manager = m;
 
-    setVisible(false);
+    //setVisible(false);
+    setFeatures(QDockWidget::NoDockWidgetFeatures);
     setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     area = new QScrollArea(this);

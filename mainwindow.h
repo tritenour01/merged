@@ -10,6 +10,7 @@
 #include <QToolButton>
 #include <QIcon>
 #include <QMessageBox>
+#include <QSplitter>
 
 #include <previewWidget.h>
 #include <propertiesWidget.h>
@@ -37,6 +38,7 @@ class window : public QMainWindow
         void newScene();
         void openScene();
         void saveScene();
+        void closeScene();
         void quit();
         void copy();
         void paste();
@@ -47,7 +49,8 @@ class window : public QMainWindow
         void about();
         void sceneDescription();
 
-        void changeFile(QString);
+        void changeFile(int);
+
         void changeView(int);
 
     private:
@@ -67,6 +70,7 @@ class window : public QMainWindow
         QAction* newAction;
         QAction* openAction;
         QAction* saveAction;
+        QAction* closeAction;
         QAction* quitAction;
         QAction* copyAction;
         QAction* pasteAction;
@@ -83,8 +87,11 @@ class window : public QMainWindow
 
         QToolBar* toolBar;
 
+        QSplitter* editSplitter;
         PropertiesWidget* properties;
         editWidget* edit;
+
+        QSplitter* previewSplitter;
         consoleWidget* console;
         previewWidget* preview;
 

@@ -1,31 +1,90 @@
 #include <networkingDialog.h>
+#include <QDebug>
 
-NetworkingDialog::NetworkingDialog(void)
+NetworkingDialog::NetworkingDialog(QWidget* parent) :
+    QDialog(parent)
 {
     setWindowTitle("Networking");
 
-    QVBoxLayout* layout = new QVBoxLayout();
+    QVBoxLayout* mainLayout = new QVBoxLayout();
 
-    QTableWidget* widget = new QTableWidget(10, 4, this);
-    widget->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
-    widget->setHorizontalHeaderItem(1, new QTableWidgetItem("Address"));
-    widget->setHorizontalHeaderItem(2, new QTableWidgetItem("State"));
-    widget->setHorizontalHeaderItem(3, new QTableWidgetItem("Connection"));
+    table = new QTableWidget(0, 4, this);
+    table->setHorizontalHeaderItem(0, new QTableWidgetItem("Name"));
+    table->setHorizontalHeaderItem(1, new QTableWidgetItem("Address"));
+    table->setHorizontalHeaderItem(2, new QTableWidgetItem("State"));
+    table->setHorizontalHeaderItem(3, new QTableWidgetItem("Connection"));
 
-    //widget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    widget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    widget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    widget->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
 
-    //widget->adjustSize();
+    table->setMinimumWidth(getTableWidgetWidth(table));
+    table->setMaximumWidth(table->minimumWidth());
 
-    widget->setMinimumWidth(getTableWidgetWidth(widget));
-    widget->setMaximumWidth(widget->minimumWidth());
+    mainLayout->addWidget(table);
+    mainLayout->setSizeConstraint(QLayout::SetFixedSize);
 
-    layout->addWidget(widget);
-    layout->setSizeConstraint(QLayout::SetFixedSize);
+    QHBoxLayout* modifyLayout = new QHBoxLayout();
 
-    setLayout(layout);
+    QLabel* label = new QLabel("Server: ");
+    modifyLayout->addWidget(label);
+
+    address = new QLineEdit(this);
+    modifyLayout->addWidget(address);
+
+    addButton = new QPushButton("+", this);
+    addButton->setMaximumWidth(25);
+    addButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    connect(addButton, SIGNAL(released()), this, SLOT(addDevice()));
+    modifyLayout->addWidget(addButton);
+
+    removeButton = new QPushButton("-");
+    removeButton->setMaximumWidth(25);
+    removeButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    connect(removeButton, SIGNAL(released()), this, SLOT(removeDevice()));
+    modifyLayout->addWidget(removeButton);
+
+    mainLayout->addLayout(modifyLayout);
+
+    setLayout(mainLayout);
+}
+
+void NetworkingDialog::addDevice(void)
+{
+    QString value = address->text();
+    QHostAddress ip;
+    if(validIP(value)){
+        //add
+    }
+    else{
+        QMessageBox mess;
+        mess.setText("Invalid IP address");
+        mess.exec();
+    }
+}
+
+bool NetworkingDialog::validIP(QString ip)
+{
+    QStringList values = ip.split(".");
+    if(values.length() != 4)
+        return false;
+    for(int i = 0; i < 4; i++){
+        QString part = values[i];
+        if(part.isEmpty())
+            return false;
+        bool ok = true;
+        int num = part.toInt(&ok);
+        if(!ok)
+            return false;
+        if(num < 0 || num > 255)
+            return false;
+    }
+    return true;
+}
+
+void NetworkingDialog::removeDevice(void)
+{
+
 }
 
 int NetworkingDialog::getTableWidgetWidth(QTableWidget* table)

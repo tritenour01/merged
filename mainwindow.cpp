@@ -30,12 +30,34 @@ void window::setup(void)
     manager = new fileManager();
     runner = new Runner();
 
-    networkDialog = new NetworkingDialog();
+    networkDialog = new NetworkingDialog(this);
+
+    editSplitter = new QSplitter(this);
 
     properties = new PropertiesWidget(manager, "Properties", this);
     edit = new editWidget(manager, this);
+
+    editSplitter->addWidget(properties);
+    editSplitter->addWidget(edit);
+
+    editSplitter->setCollapsible(0, false);
+    editSplitter->setStretchFactor(0, 0);
+    editSplitter->setCollapsible(1, false);
+    editSplitter->setStretchFactor(1, 1);
+
+    previewSplitter = new QSplitter(this);
+    previewSplitter->setOrientation(Qt::Vertical);
+
     console = new consoleWidget("Output Console", this);
     preview = new previewWidget(this);
+
+    previewSplitter->addWidget(preview);
+    previewSplitter->addWidget(console);
+
+    previewSplitter->setCollapsible(0, false);
+    previewSplitter->setStretchFactor(0, 1);
+    previewSplitter->setCollapsible(1, false);
+    previewSplitter->setStretchFactor(1, 0);
 
     logger = new UILogger(console);
     Log::setLogger(logger);
@@ -43,6 +65,8 @@ void window::setup(void)
     setView(0);
     threadAction[0]->trigger();
     blockAction[0]->trigger();
+
+    setDockNestingEnabled(true);
 }
 
 void showMsg(QString msg)
@@ -74,25 +98,27 @@ void window::renderDone(void)
 
 void window::newScene(void)
 {
-    QString newFile = manager->createFile();
-    currentFile->addItem(newFile, newFile);
+    int newFileID = manager->createFile();
+    QString fileName = manager->getFileName(newFileID);
+    currentFile->addItem(fileName, newFileID);
 
-    int index = currentFile->findData(newFile);
+    int index = currentFile->findData(newFileID);
     if(index != -1)
         currentFile->setCurrentIndex(index);
 
-    currentFile->setItemText(index, newFile + "*");
+    currentFile->setItemText(index, fileName + "*");
     manager->edited();
 }
 
 void window::openScene(void)
 {
-    QString fileName = manager->openFile(this);
-    if(fileName == "")
+    int fileID = manager->openFile(this);
+    if(fileID == -1)
         return;
 
-    currentFile->addItem(fileName, fileName);
-    int index = currentFile->findData(fileName);
+    QString fileName = manager->getFileName(fileID);
+    currentFile->addItem(fileName, fileID);
+    int index = currentFile->findData(fileID);
     currentFile->setCurrentIndex(index);
 }
 
@@ -100,16 +126,23 @@ void window::saveScene(void)
 {
     properties->write();
     edit->write();
-    QString fileName = manager->saveFile();
-    if(fileName != ""){
+    bool saved = manager->saveFile();
+    if(saved){
+        int currentID = currentFile->itemData(currentFile->currentIndex()).toInt();
+        QString newFilename = manager->getFileName(currentID);
+
         QString currentText = currentFile->currentText();
         QString newText = currentText.mid(0, currentText.length() - 1);
         currentFile->setItemText(currentFile->currentIndex(), newText);
-        if(currentFile->currentText() != fileName){
-            currentFile->setItemText(currentFile->currentIndex(), fileName);
-            currentFile->setItemData(currentFile->currentIndex(), fileName);
+        if(currentFile->currentText() != newFilename){
+            currentFile->setItemText(currentFile->currentIndex(), newFilename);
         }
     }
+}
+
+void window::closeScene(void)
+{
+    showMsg("close");
 }
 
 void window::quit(void)
@@ -178,12 +211,12 @@ void window::sceneDescription(void)
     showMsg("description");
 }
 
-void window::changeFile(QString val)
+void window::changeFile(int val)
 {
     loading = true;
     properties->write();
     edit->write();
-    manager->setCurrentFile(val);
+    manager->setCurrentFile(currentFile->itemData(val).toInt());
     properties->read();
     edit->read();
     loading = false;
@@ -212,6 +245,9 @@ void window::createActions(void)
     saveAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/save.png"), "Save", this);
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, SIGNAL(triggered()), this, SLOT(saveScene()));
+
+    closeAction = new QAction("Close File", this);
+    connect(closeAction, SIGNAL(triggered()), this, SLOT(closeScene()));
 
     quitAction = new QAction("Quit", this);
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
@@ -256,6 +292,8 @@ void window::createMenu(void)
     fileMenu->addAction(newAction);
     fileMenu->addAction(openAction);
     fileMenu->addAction(saveAction);
+    fileMenu->addSeparator();
+    fileMenu->addAction(closeAction);
     fileMenu->addSeparator();
     fileMenu->addAction(quitAction);
 
@@ -306,7 +344,7 @@ void window::createToolbar(void)
     currentFile->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     currentFile->setMaximumSize(QSize(150, 25));
     toolBar->addWidget(currentFile);
-    connect(currentFile, SIGNAL(currentIndexChanged(QString)), this, SLOT(changeFile(QString)));
+    connect(currentFile, SIGNAL(currentIndexChanged(int)), this, SLOT(changeFile(int)));
 }
 
 void window::createStatusbar(void)
@@ -326,16 +364,12 @@ void window::createStatusbar(void)
 void window::setView(int v)
 {
     if(v == 0){
-        preview->setParent(NULL);
-        setCentralWidget(edit);
-        console->setVisible(false);
-        properties->setVisible(true);
+        previewSplitter->setParent(NULL);
+        setCentralWidget(editSplitter);
     }
     else if(v == 1){
-        edit->setParent(NULL);
-        setCentralWidget(preview);
-        properties->setVisible(false);
-        console->setVisible(true);
+        editSplitter->setParent(NULL);
+        setCentralWidget(previewSplitter);
     }
 }
 

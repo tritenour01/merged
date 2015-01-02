@@ -2,8 +2,9 @@
 #define CONSOLEWIDGET_H
 
 #include <QMainWindow>
-#include <QDockWidget>
 #include <QTextEdit>
+#include <QVBoxLayout>
+#include <QDockWidget>
 
 class consoleWidget : public QDockWidget
 {

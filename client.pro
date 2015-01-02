@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -44,7 +44,10 @@ SOURCES += main.cpp \
     runner.cpp \
     UIimage.cpp \
     networkingDialog.cpp \
-    UIlogger.cpp
+    UIlogger.cpp \
+    deviceManager.cpp \
+    device.cpp \
+    connection.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -60,4 +63,7 @@ HEADERS  += \
     runner.h \
     UIimage.h \
     networkingDialog.h \
-    UIlogger.h
+    UIlogger.h \
+    deviceManager.h \
+    device.h \
+    connection.h

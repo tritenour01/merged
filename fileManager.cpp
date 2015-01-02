@@ -15,7 +15,7 @@ void fileManager::edited(void)
         currentFile->info.edited = true;
 }
 
-QString fileManager::createFile(void)
+int fileManager::createFile(void)
 {
     fileObject* newFile = new fileObject();
 
@@ -39,23 +39,25 @@ QString fileManager::createFile(void)
     if(num > 1)
         newFileName.append(QString::number(num));
 
+    newFile->fileID = files->size();
     newFile->info.fileName = newFileName;
     newFile->info.filePath = "";
     newFile->info.edited = false;
     newFile->info.saved = false;
     files->push_back(newFile);
 
-    return newFile->info.fileName;
+    return newFile->fileID;
 }
 
-QString fileManager::openFile(QMainWindow* window)
+int fileManager::openFile(QMainWindow* window)
 {
     QString filePath = QFileDialog::getOpenFileName(window, QObject::tr("Open Scene"), "", QObject::tr("Scene Files (*.scene)"));
     if(filePath == "")
-        return "";
+        return -1;
 
     QFileInfo info(filePath);
     fileObject* openedFile = new fileObject();
+    openedFile->fileID = files->size();
     openedFile->info.fileName = info.baseName() + ".scene";
     openedFile->info.filePath = info.path();
     openedFile->info.edited = false;
@@ -69,20 +71,22 @@ QString fileManager::openFile(QMainWindow* window)
         mess.setText("File at " + filePath + " is not a valid scene file");
         mess.exec();
         delete openedFile;
-        return "";
+        return -1;
     }
 
     files->push_back(openedFile);
-    return openedFile->info.fileName;
+    return openedFile->fileID;
 }
 
-QString fileManager::saveFile(void)
+bool fileManager::saveFile(void)
 {
     if(!currentFile)
-        return "";
+        return false;
     if(currentFile->info.edited){
         if(!currentFile->info.saved){
             QString filePath = QFileDialog::getSaveFileName(window::getInstance(), QObject::tr("Save Scene"), "", QObject::tr("Scene Files (*.scene)"));
+            if(filePath == "")
+                return false;
             QFileInfo info(filePath);
             currentFile->info.fileName = info.baseName() + ".scene";
             currentFile->info.filePath = info.path();
@@ -94,9 +98,14 @@ QString fileManager::saveFile(void)
         file.close();
         currentFile->info.saved = true;
         currentFile->info.edited = false;
-        return currentFile->info.fileName;
+        return true;
     }
-    return "";
+    return false;
+}
+
+void fileManager::closeFile(void)
+{
+
 }
 
 string fileManager::getData(void)
@@ -106,15 +115,28 @@ string fileManager::getData(void)
     return currentFile->toString().toLocal8Bit().constData();
 }
 
-void fileManager::setCurrentFile(QString name)
+QString fileManager::getFileName(int ID)
 {
-    fileObject* temp = NULL;
-    for(int i = 0; i < files->size(); i++){
-        if(files->at(i)->info.fileName == name){
-            currentFile = files->at(i);
-            continue;
-        }
+    for(int i = 0; i < files->size(); i++)
+    {
+        if(files->at(i)->fileID == ID)
+            return files->at(i)->info.fileName;
     }
+    return "";
+}
+
+void fileManager::setCurrentFile(int ID)
+{
+    for(int i = 0; i < files->size(); i++){
+        QMessageBox mess;
+        mess.setText(QString::number(files->at(i)->fileID));
+        //mess.exec();
+        if(files->at(i)->fileID == ID)
+            currentFile = files->at(i);
+    }
+    QMessageBox mess;
+    mess.setText("BAD");
+    //mess.exec();
 }
 
 void fileManager::read(FIELDS field, void* returnData)

@@ -23,18 +23,21 @@ class fileManager
         enum FIELDS {SCENE, CAMERA, TEXT};
 
         fileManager(void);
-        QString createFile(void);
-        QString openFile(QMainWindow*);
-        QString saveFile(void);
+        int createFile(void);
+        int openFile(QMainWindow*);
+        bool saveFile(void);
+
+        void closeFile(void);
 
         string getData(void);
+        QString getFileName(int);
 
         void write(FIELDS, void*);
         void read(FIELDS, void*);
 
         void edited(void);
 
-        void setCurrentFile(QString);
+        void setCurrentFile(int);
 
     private:
 

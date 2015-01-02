@@ -33,8 +33,10 @@ typedef struct antiData
             return "uniform " + QString::number(sampling) + "\n";
         else if(type == "jitter")
             return "jitter " + QString::number(sampling) + "\n";
-        else if(type == "adaptive")
-            return "adaptive " + QString::number(sampling) + " " + QString::number(threshold) + "\n";
+        else if(type == "adaptive"){
+            QString thres = QString::number(threshold);
+            return "adaptive " + QString::number(sampling) + " <" + thres + ", " + thres + ", " + thres + ">\n";
+        }
     }
 
 }antiData;
@@ -122,6 +124,7 @@ typedef struct cameraData
 
 typedef struct fileObject
 {
+    int fileID;
     fileInfo info;
     sceneData scene;
     cameraData camera;
