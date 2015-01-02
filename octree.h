@@ -6,6 +6,7 @@
 #include "ray.h"
 #include "box.h"
 #include "debug.h"
+#include "log.h"
 
 class Triangle;
 

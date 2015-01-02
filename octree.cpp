@@ -48,7 +48,9 @@ void Octree::createTree(vector<Triangle*>* newData)
 
     compute(root);
 
-    cout<<minBound<<maxBound<<endl;
+    Log::writeLine("Mesh Bounds:");
+    Log::writeLine("  " + minBound.toString());
+    Log::writeLine("  " + maxBound.toString());
 }
 
 void Octree::insertTriangles(vector<Triangle*>& triangles, Vector3 minCorner, Vector3 maxCorner, Node* current, int depth)

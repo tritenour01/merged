@@ -10,15 +10,15 @@ SceneParser::SceneParser(Raytracer* r, Config& c, Parser* p) : config(c)
 
 bool SceneParser::parseScene(string fileName)
 {
-    cout<<"parsing scene file: "<<fileName<<endl;
+    Log::writeLine("parsing scene file: " + fileName);
     if(!scanner.setupScanner(fileName))
         return false;
     advance();
     parse();
     if(errorFlag == false)
-        cout<<"parsing successful\n";
+        Log::writeLine("parsing successful");
     else
-        cout<<"parsing failed\n";
+        Log::writeLine("parsing failed");
     return !errorFlag;
 }
 
@@ -252,7 +252,9 @@ void SceneParser::parseMesh(void)
     vector<Triangle*>* newMesh = new vector<Triangle*>;
     vector<Vector3>* newPoints = new vector<Vector3>;
     vector<Vector3>* newNormals = new vector<Vector3>;
-    parser->loadObj(fileName, *newMesh, *newPoints, *newNormals);
+
+    if(!parser->loadObj(fileName, *newMesh, *newPoints, *newNormals))
+        errorFlag = true;
 
     Mesh* m = new Mesh(newMesh, newPoints, newNormals);
     raytracer->addObject(m);
@@ -655,7 +657,7 @@ void SceneParser::parseToken(Scanner::tokenType t)
 
 void SceneParser::error(string message)
 {
-    cout<<scanner.lineNum()<<": ERROR: "<<message<<endl;
+    Log::writeLine(Log::intToString(scanner.lineNum()) + ": ERROR: " + message);
     errorFlag = true;
 }
 

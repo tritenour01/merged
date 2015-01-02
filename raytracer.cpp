@@ -239,7 +239,6 @@ Vector3 Raytracer::calculateShading(Ray& ray, Vector3& n, Vector3& l, Vector3& d
         //float C = max(0.0f, cos1 * cos2 + sin1 * sin2);
 
         Vector3 temp = diffuse * ray.s->getMaterial().getDiffuseFactor() * max(0.0f, cos2) * (A + (B * C * s * t));
-        //cout<<B<<endl;
         color += temp;
     }
     if(ray.s->getMaterial().getSpecularFactor() > 0.0){

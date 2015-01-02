@@ -3,6 +3,8 @@
 
 #include "image.h"
 #include "raytracer.h"
+#include "log.h"
+
 #include <thread>
 #include <mutex>
 #include <condition_variable>

@@ -47,7 +47,7 @@ void Manager::Render(void)
     if(numThreads == 1)
         basicRender();
     else{
-        cout<<"0/"<<numBlocks<<" blocks            \r";
+        Log::write("0/" + Log::intToString(numBlocks) + " blocks            \r");
         for(int i = 0; i < numThreads; i++)
             threads.push_back(thread(threadedRender, this, i));
         threadsActive = numThreads;
@@ -59,10 +59,8 @@ void Manager::Render(void)
 void Manager::basicRender(void)
 {
     for(int i = 0; i < raytracer->getHeight(); i++){
-        cout<<"\r"<<i+1<<"/"<<raytracer->getHeight()<<" rows         ";
+        Log::write("\r" + Log::intToString(i+1) + "/" + Log::intToString(raytracer->getHeight()) + " rows         ");
         for(int j = 0; j < raytracer->getWidth(); j++){
-            if(i == 555 && j == 392)
-                cout<<"HERE";
             Vector3 color = raytracer->tracePixel(j, i);
             img->setPixel(j, i, color);
         }
@@ -87,7 +85,7 @@ void Manager::threadedRender(int id)
         }
         completeMutex.lock();
         blocksComplete++;
-        cout<<blocksComplete<<"/"<<numBlocks<<" blocks            \r";
+        Log::write(Log::intToString(blocksComplete) + "/" + Log::intToString(numBlocks) + " blocks            \r");
         completeMutex.unlock();
     }
 

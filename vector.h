@@ -4,6 +4,7 @@
 #include <cmath>
 #include <assert.h>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -234,6 +235,13 @@ public:
     {
         o<<"("<<v.x<<", "<<v.y<<", "<<v.z<<")"<<endl;
         return o;
+    }
+
+    string toString(void)
+    {
+        stringstream ss;
+        ss<<"("<<x<<", "<<y<<", "<<z<<")";
+        return ss.str();
     }
 };
 

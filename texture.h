@@ -2,7 +2,7 @@
 #define TEXTURE_H_INCLUDED
 
 #include <iostream>
-#include <SFML/Graphics/Image.hpp>
+#include <SFML\Graphics\Image.hpp>
 #include "vector.h"
 
 using namespace std;

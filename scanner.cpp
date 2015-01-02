@@ -1,10 +1,11 @@
 #include "scanner.h"
+#include "log.h"
 
 bool Scanner::setupScanner(string fileName)
 {
     file.open(fileName.c_str());
     if(!file.is_open()){
-        cout<<"unable to open file: "<<fileName<<endl;
+        Log::writeLine("unable to open file: " + fileName);
         return false;
     }
     file.get(currentChar);
@@ -236,7 +237,7 @@ void Scanner::error(string errorMessage)
 {
     if(errorFlag)
         return;
-    cout<<lineNumber<<": ERROR: "<<errorMessage<<endl;
+    Log::writeLine(Log::intToString(lineNumber) + ": ERROR: " + errorMessage);
     errorFlag = true;
 }
 
@@ -245,37 +246,37 @@ void Scanner::debug(tokenType t)
     switch(t)
     {
         case Scanner::Id:
-            cout<<"TOKEN ID: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN ID: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::Int:
-            cout<<"TOKEN INT: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN INT: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::Float:
-            cout<<"TOKEN FLOAT: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN FLOAT: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::String:
-            cout<<"TOKEN STRING: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN STRING: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::Comma:
-            cout<<"TOKEN COMMA: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN COMMA: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::LeftAngle:
-            cout<<"TOKEN LEFTANGLE: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN LEFTANGLE: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::RightAngle:
-            cout<<"TOKEN RIGHTANGLE: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN RIGHTANGLE: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::LeftCurly:
-            cout<<"TOKEN LEFTCURLY: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN LEFTCURLY: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::RightCurly:
-            cout<<"TOKEN RIGHTCURLY: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN RIGHTCURLY: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::StreamDone:
-            cout<<"TOKEN STREAMDONE: "<<token<<" @ line "<<lineNumber<<endl;
+            Log::writeLine("TOKEN STREAMDONE: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::ERROR:
-            cout<<"TOKEN ERROR: "<<token<<endl;
+            Log::writeLine("TOKEN ERROR: " + token);
             break;
     }
 }

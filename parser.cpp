@@ -24,7 +24,7 @@ void trimString( string & str ) {
 
 bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>& points, vector<Vector3>& normals)
 {
-    cout<<"loading mesh: "<<fileName<<endl;
+    Log::writeLine("loading mesh: " + fileName);
     vector<Vector3> texCoords;
     vector<float> texU;
     vector<float> texV;
@@ -36,7 +36,7 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
     ifstream objStream(fileName.c_str(), std::ios::in);
 
     if( !objStream ) {
-        cerr << "Unable to open OBJ file: " << fileName << endl;
+        Log::writeLine("Unable to open OBJ file: " + fileName);
         return false;
     }
 
@@ -96,7 +96,7 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                             faceNormal.push_back(nIndex);
                     }
                     if( pIndex == -1 ) {
-                        cout<<"Missing point index!!!";
+                        Log::writeLine("Missing point index");
                     } else {
                         face.push_back(pIndex);
                     }
@@ -171,12 +171,12 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
 
     objStream.close();
 
-    cout << "Loaded mesh from: " << fileName << endl;
-    cout << " " << points.size() << " points" << endl;
-    cout << " " << nFaces << " faces" << endl;
-    cout << " " << faces.size()<< " triangles." << endl;
-    cout << " " << normals.size() << " normals" << endl;
-    cout << " " << texCoords.size() << " texture coordinates." << endl;
+    Log::writeLine("Loaded mesh from: " + fileName);
+    Log::writeLine(" " + Log::intToString(points.size()) + " points");
+    Log::writeLine(" " + Log::intToString(nFaces) + " faces");
+    Log::writeLine(" " + Log::intToString(faces.size()) + " triangles");
+    Log::writeLine(" " + Log::intToString(normals.size()) + " normals");
+    Log::writeLine(" " + Log::intToString(texCoords.size()) + " texture coordinates");
 
     return true;
 }

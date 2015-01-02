@@ -8,6 +8,7 @@
 #include <cstdlib>
 
 #include "sceneParser.h"
+#include "triangle.h"
 
 class Raytracer;
 struct Config;
