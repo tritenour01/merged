@@ -10,8 +10,12 @@
 #include <QImage>
 #include <UIimage.h>
 #include <manager.h>
+#include <UIemitter.h>
 
 #include <raytracer.h>
+#include <UIemitter.h>
+
+class JobManager;
 
 using namespace std;
 
@@ -21,7 +25,7 @@ class Worker : public QObject
 
     public:
 
-        Worker(string, int, int);
+        Worker(string, int, int, UIemitter*);
         ~Worker();
 
     public slots:
@@ -30,28 +34,51 @@ class Worker : public QObject
 
     signals:
 
-        void imageReady(QImage*);
+        void imageReady(UIimage*);
         void renderComplete(void);
 
     private:
 
         QImage* image;
+        UIimage* img;
+        UIemitter* emitter;
 
         string filePath;
         int threads;
         int blocks;
-
 };
 
-class Runner
+class Runner : public QObject
 {
+    Q_OBJECT
+
     public:
 
-        void runRenderer(string, int, int);
+        Runner(void);
+        void runRenderer(string);
+
+        void setThreads(int);
+        void setBlocks(int);
+
+        void setManager(JobManager*);
+
+    private slots:
+
+        void setImage(UIimage*);
+        void done(void);
+
+    signals:
+
+        void imageReady(UIimage*);
+        void renderComplete(void);
 
     private:
 
+        UIemitter* emitter;
+        JobManager* manager;
 
+        int threads;
+        int blocks;
 };
 
 #endif // RUNNER_H

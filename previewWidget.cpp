@@ -31,8 +31,6 @@ void previewWidget::timerFinished(void)
     else if(currentTimerInterval > maxTimerInterval)
         currentTimerInterval = maxTimerInterval;
 
-    qDebug()<<currentTimerInterval;
-
     timer->start(currentTimerInterval);
 }
 
@@ -67,9 +65,9 @@ void previewWidget::paintEvent(QPaintEvent* event)
     paint.drawImage(result, i, imageRect);
 }
 
-void previewWidget::setImage(QImage* i)
+void previewWidget::setImage(UIimage* i)
 {
-    image = i;
+    image = new QImage(i->getPtr(), i->getWidth(), i->getHeight(), QImage::Format_ARGB32);
     timer->start(currentTimerInterval);
 }
 

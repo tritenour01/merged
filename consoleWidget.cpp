@@ -1,28 +1,26 @@
 #include <consoleWidget.h>
+#include <UIlogger.h>
 
-consoleWidget::consoleWidget(QString name, QMainWindow* w) :
-    QDockWidget(name, w)
+
+consoleWidget::consoleWidget(void)
 {
-    setFeatures(QDockWidget::NoDockWidgetFeatures);
+    logs = new QPlainTextEdit();
+    logs->setReadOnly(true);
 
-    logs = new QTextEdit();
-    logs->setLineWrapMode(QTextEdit::NoWrap);
+    QVBoxLayout* l = new QVBoxLayout;
+    l->addWidget(logs);
+    setLayout(l);
 
-    setWidget(logs);
-    setAllowedAreas(Qt::BottomDockWidgetArea);
-    w->addDockWidget(Qt::BottomDockWidgetArea, this);
+    logger = new UILogger(this);
+    Log::setLogger(logger);
 }
 
-void consoleWidget::write(std::string message)
+void consoleWidget::write(QString message)
 {
-    int pos = message.find('\r');
-
-        //logs->moveCursor(QTextCursor::End);
-        //logs->textCursor().insertText(QString::fromStdString(message));
-
+    logs->appendPlainText(message);
 }
 
-void consoleWidget::writeLine(std::string message)
+void consoleWidget::writeLine(QString message)
 {
-    //logs->append(QString::fromStdString(message));
+    logs->appendPlainText(message);
 }

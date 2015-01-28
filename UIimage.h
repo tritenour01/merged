@@ -15,9 +15,12 @@ class UIimage : public QObject, public Image
         void setPixel(int, int, Vector3&);
         unsigned char* getPtr(void);
 
+        int getWidth(void);
+        int getHeight(void);
+
     signals:
 
-        void changedPixel(void);
+        void changed(void);
 
     private:
 

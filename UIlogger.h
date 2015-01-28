@@ -4,8 +4,12 @@
 #include <logger.h>
 #include <consoleWidget.h>
 
-class UILogger : public Logger
+#include <QObject>
+
+class UILogger : public QObject, public Logger
 {
+    Q_OBJECT
+
     public:
 
         UILogger(consoleWidget*);
@@ -13,9 +17,10 @@ class UILogger : public Logger
         void write(std::string);
         void writeLine(std::string);
 
-    private:
+    signals:
 
-        consoleWidget* console;
+        void consoleWrite(QString);
+        void consoleWriteLine(QString);
 };
 
 #endif // UILOGGER_H_INCLUDED

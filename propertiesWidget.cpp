@@ -1,14 +1,9 @@
 #include <propertiesWidget.h>
 #include <valueContainer.h>
 
-PropertiesWidget::PropertiesWidget(fileManager* m, QString name, QMainWindow* w) :
-    QDockWidget(name, w)
+PropertiesWidget::PropertiesWidget(fileManager* m)
 {
     manager = m;
-
-    //setVisible(false);
-    setFeatures(QDockWidget::NoDockWidgetFeatures);
-    setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
     area = new QScrollArea(this);
     area->setWidgetResizable(true);
@@ -71,9 +66,9 @@ PropertiesWidget::PropertiesWidget(fileManager* m, QString name, QMainWindow* w)
 
     area->setWidget(widget);
 
-    setWidget(area);
-
-    w->addDockWidget(Qt::LeftDockWidgetArea, this);
+    QVBoxLayout* l = new QVBoxLayout;
+    l->addWidget(area);
+    setLayout(l);
 }
 
 void PropertiesWidget::readOnly(bool b)

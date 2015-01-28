@@ -20,7 +20,6 @@ window::window(void)
     createMenu();
 
     createToolbar();
-    createStatusbar();
 
     loading = false;
 }
@@ -29,44 +28,20 @@ void window::setup(void)
 {
     manager = new fileManager();
     runner = new Runner();
+    jobManager = new JobManager(runner);
 
     networkDialog = new NetworkingDialog(this);
 
-    editSplitter = new QSplitter(this);
-
-    properties = new PropertiesWidget(manager, "Properties", this);
     edit = new editWidget(manager, this);
 
-    editSplitter->addWidget(properties);
-    editSplitter->addWidget(edit);
+    settings = new SettingDockWidget(this, manager, jobManager);
+    addDockWidget(Qt::LeftDockWidgetArea, settings);
 
-    editSplitter->setCollapsible(0, false);
-    editSplitter->setStretchFactor(0, 0);
-    editSplitter->setCollapsible(1, false);
-    editSplitter->setStretchFactor(1, 1);
-
-    previewSplitter = new QSplitter(this);
-    previewSplitter->setOrientation(Qt::Vertical);
-
-    console = new consoleWidget("Output Console", this);
-    preview = new previewWidget(this);
-
-    previewSplitter->addWidget(preview);
-    previewSplitter->addWidget(console);
-
-    previewSplitter->setCollapsible(0, false);
-    previewSplitter->setStretchFactor(0, 1);
-    previewSplitter->setCollapsible(1, false);
-    previewSplitter->setStretchFactor(1, 0);
-
-    logger = new UILogger(console);
-    Log::setLogger(logger);
-
-    setView(0);
     threadAction[0]->trigger();
     blockAction[0]->trigger();
+    modeAction[0]->trigger();
 
-    setDockNestingEnabled(true);
+    setCentralWidget(edit);
 }
 
 void showMsg(QString msg)
@@ -84,16 +59,6 @@ void window::fileEdited(void)
         if(text.mid(text.length() - 1, 1) != "*")
             currentFile->setItemText(currentFile->currentIndex(), currentFile->currentText() + "*");
     }
-}
-
-void window::imageChanged(void)
-{
-    preview->imageChanged();
-}
-
-void window::renderDone(void)
-{
-    preview->renderComplete();
 }
 
 void window::newScene(void)
@@ -122,9 +87,9 @@ void window::openScene(void)
     currentFile->setCurrentIndex(index);
 }
 
-void window::saveScene(void)
+bool window::saveScene(void)
 {
-    properties->write();
+    settings->write();
     edit->write();
     bool saved = manager->saveFile();
     if(saved){
@@ -138,11 +103,28 @@ void window::saveScene(void)
             currentFile->setItemText(currentFile->currentIndex(), newFilename);
         }
     }
+    return saved;
 }
 
 void window::closeScene(void)
 {
-    showMsg("close");
+    if(manager->isEdited()){
+        QMessageBox::StandardButton reply;
+        reply = QMessageBox::question(this, "Save file", "QUIT",
+                    QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+        if(reply == QMessageBox::Cancel)
+            return;
+        if(reply == QMessageBox::Yes){
+            if(!saveScene())
+                return;
+        }
+    }
+    int nextFileID = manager->closeFile();
+    int index = currentFile->currentIndex();
+
+    if(nextFileID != -1)
+        currentFile->setCurrentIndex(currentFile->findData(nextFileID));
+    currentFile->removeItem(index);
 }
 
 void window::quit(void)
@@ -168,9 +150,9 @@ void window::thread(QAction* action)
 
     QString threads = action->text();
     if(threads == "auto")
-        numThreads = 4;
+        runner->setThreads(4);
     else
-        numThreads = threads.toInt();
+        runner->setThreads(threads.toInt());
 }
 
 void window::block(QAction* action)
@@ -180,7 +162,14 @@ void window::block(QAction* action)
     action->setChecked(true);
 
     QString blocks = action->text();
-    numBlocks = blocks.toInt();
+    runner->setBlocks(blocks.toInt());
+}
+
+void window::mode(QAction* action)
+{
+    for(int i = 0; i < 3; i++)
+        modeAction[i]->setChecked(false);
+    action->setChecked(true);
 }
 
 void window::networking(void)
@@ -195,10 +184,13 @@ void window::renderScene(void)
     string data = manager->getData();
     if(data == "")
         return;
-    qDebug()<<numThreads;
-    qDebug()<<numBlocks;
-    runner->runRenderer(data, numThreads, numBlocks);
-    setView(1);
+    int id = currentFile->itemData(currentFile->currentIndex()).toInt();
+    jobManager->addJob(manager->getName(id), data);
+}
+
+void window::abortRender(void)
+{
+    showMsg("abort");
 }
 
 void window::about(void)
@@ -214,35 +206,25 @@ void window::sceneDescription(void)
 void window::changeFile(int val)
 {
     loading = true;
-    properties->write();
+    settings->write();
     edit->write();
     manager->setCurrentFile(currentFile->itemData(val).toInt());
-    properties->read();
+    settings->read();
     edit->read();
     loading = false;
 }
 
-void window::changeView(int val)
-{
-    setView(val);
-}
-
-void window::setImage(QImage* image)
-{
-    preview->setImage(image);
-}
-
 void window::createActions(void)
 {
-    newAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/new.png"), "New", this);
+    newAction = new QAction(QIcon("icons/new.png"), "New", this);
     newAction->setShortcut(QKeySequence::New);
     connect(newAction, SIGNAL(triggered()), this, SLOT(newScene()));
 
-    openAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/open.png"), "Open", this);
+    openAction = new QAction(QIcon("icons/open.png"), "Open", this);
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, SIGNAL(triggered()), this, SLOT(openScene()));
 
-    saveAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/save.png"), "Save", this);
+    saveAction = new QAction(QIcon("icons/save.png"), "Save", this);
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, SIGNAL(triggered()), this, SLOT(saveScene()));
 
@@ -253,11 +235,11 @@ void window::createActions(void)
     quitAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_Q));
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
 
-    copyAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/copy.png"), "Copy", this);
+    copyAction = new QAction(QIcon("icons/copy.png"), "Copy", this);
     copyAction->setShortcut(QKeySequence::Copy);
     connect(copyAction, SIGNAL(triggered()), this, SLOT(copy()));
 
-    pasteAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/paste.png"), "Paste", this);
+    pasteAction = new QAction(QIcon("icons/paste.png"), "Paste", this);
     pasteAction->setShortcut(QKeySequence::Paste);
     connect(pasteAction, SIGNAL(triggered()), this, SLOT(paste()));
 
@@ -273,10 +255,16 @@ void window::createActions(void)
         blockAction[i]->setCheckable(true);
     }
 
-    networkAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/wifi.png"), "Networking", this);
+    QString renderModes[] = {"Local", "Network - Master", "Network - Slave"};
+    for(int i = 0; i < 3; i++){
+        modeAction[i] = new QAction(renderModes[i], this);
+        modeAction[i]->setCheckable(true);
+    }
+
+    networkAction = new QAction(QIcon("icons/wifi.png"), "Networking", this);
     connect(networkAction, SIGNAL(triggered()), this, SLOT(networking()));
 
-    renderAction = new QAction(QIcon("C:/Qt/Tools/QtCreator/bin/untitled/play.png"), "Render", this);
+    renderAction = new QAction(QIcon("icons/play.png"), "Render", this);
     connect(renderAction, SIGNAL(triggered()), this, SLOT(renderScene()));
 
     aboutAction = new QAction("About", this);
@@ -313,6 +301,11 @@ void window::createMenu(void)
         blockMenu->addAction(blockAction[i]);
     connect(blockMenu, SIGNAL(triggered(QAction*)), this, SLOT(block(QAction*)));
 
+    modeMenu = renderMenu->addMenu("Mode");
+    for(int i = 0; i < 3; i++)
+        modeMenu->addAction(modeAction[i]);
+    connect(modeMenu, SIGNAL(triggered(QAction*)), this, SLOT(mode(QAction*)));
+
     renderMenu->addAction(networkAction);
     renderMenu->addAction(renderAction);
 
@@ -334,6 +327,7 @@ void window::createToolbar(void)
     toolBar->addAction(pasteAction);
     toolBar->addSeparator();
     toolBar->addAction(renderAction);
+    toolBar->addSeparator();
     toolBar->addAction(networkAction);
 
     QWidget* spacer = new QWidget();
@@ -345,31 +339,5 @@ void window::createToolbar(void)
     currentFile->setMaximumSize(QSize(150, 25));
     toolBar->addWidget(currentFile);
     connect(currentFile, SIGNAL(currentIndexChanged(int)), this, SLOT(changeFile(int)));
-}
-
-void window::createStatusbar(void)
-{
-    view = new QComboBox(this);
-    view->addItem("Scene Editor");
-    view->addItem("Render Preview");
-    connect(view, SIGNAL(currentIndexChanged(int)), this, SLOT(changeView(int)));
-
-    progress = new QProgressBar(this);
-    progress->setTextVisible(false);
-
-    statusBar()->addWidget(view);
-    statusBar()->addWidget(progress, 1);
-}
-
-void window::setView(int v)
-{
-    if(v == 0){
-        previewSplitter->setParent(NULL);
-        setCentralWidget(editSplitter);
-    }
-    else if(v == 1){
-        editSplitter->setParent(NULL);
-        setCentralWidget(previewSplitter);
-    }
 }
 

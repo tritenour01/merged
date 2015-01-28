@@ -119,6 +119,11 @@ Scanner::tokenType Scanner::nextToken()
         returnVal = RightCurly;
         nextChar();
     }
+    else if(currentChar == '#'){
+        token = currentChar;
+        returnVal = Separator;
+        nextChar();
+    }
     else{
         string c = "";
         c += currentChar;
@@ -275,6 +280,9 @@ void Scanner::debug(tokenType t)
         case Scanner::StreamDone:
             Log::writeLine("TOKEN STREAMDONE: " + token + " @ line " + Log::intToString(lineNumber));
             break;
+        case Scanner::Separator:
+            Log::writeLine("TOKEN SEPARATOR: " + token + " @ line " + Log::intToString(lineNumber));
+            break;
         case Scanner::ERROR:
             Log::writeLine("TOKEN ERROR: " + token);
             break;
@@ -283,7 +291,7 @@ void Scanner::debug(tokenType t)
 
 string Scanner::getRemainingText(void)
 {
-    string text = token + currentChar;
+    string text = "";
     string line;
     while(getline(file, line))
         text += line + "\n";

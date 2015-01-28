@@ -3,23 +3,20 @@
 
 #include <QMainWindow>
 #include <QMenuBar>
-#include <QPushButton>
 #include <QProgressBar>
 #include <QStatusBar>
 #include <QToolBar>
 #include <QToolButton>
 #include <QIcon>
 #include <QMessageBox>
-#include <QSplitter>
+#include <QComboBox>
 
-#include <previewWidget.h>
-#include <propertiesWidget.h>
+#include <previewWindow.h>
 #include <editWidget.h>
-#include <consoleWidget.h>
 #include <fileManager.h>
 #include <runner.h>
 #include <networkingDialog.h>
-#include <UIlogger.h>
+#include <settingDockWidget.h>
 
 class window : public QMainWindow
 {
@@ -30,28 +27,25 @@ class window : public QMainWindow
 
     public slots:
         void fileEdited();
-        void setImage(QImage*);
-        void imageChanged();
-        void renderDone();
 
     private slots:
         void newScene();
         void openScene();
-        void saveScene();
+        bool saveScene();
         void closeScene();
         void quit();
         void copy();
         void paste();
         void thread(QAction*);
         void block(QAction*);
+        void mode(QAction*);
         void networking();
         void renderScene();
+        void abortRender();
         void about();
         void sceneDescription();
 
         void changeFile(int);
-
-        void changeView(int);
 
     private:
         window(void);
@@ -65,6 +59,7 @@ class window : public QMainWindow
         QMenu* renderMenu;
         QMenu* threadMenu;
         QMenu* blockMenu;
+        QMenu* modeMenu;
         QMenu* helpMenu;
 
         QAction* newAction;
@@ -76,42 +71,30 @@ class window : public QMainWindow
         QAction* pasteAction;
         QAction* threadAction[6];
         QAction* blockAction[7];
+        QAction* modeAction[3];
         QAction* networkAction;
         QAction* renderAction;
         QAction* aboutAction;
         QAction* descriptionAction;
 
-        QComboBox* view;
-        QProgressBar* progress;
         QComboBox* currentFile;
 
         QToolBar* toolBar;
 
-        QSplitter* editSplitter;
-        PropertiesWidget* properties;
         editWidget* edit;
 
-        QSplitter* previewSplitter;
-        consoleWidget* console;
-        previewWidget* preview;
-
         fileManager* manager;
+        JobManager* jobManager;
 
         Runner* runner;
 
         NetworkingDialog* networkDialog;
 
-        UILogger* logger;
-
-        int numThreads;
-        int numBlocks;
+        SettingDockWidget* settings;
 
         void createActions(void);
         void createMenu(void);
         void createToolbar(void);
-        void createStatusbar(void);
-
-        void setView(int);
 };
 
 #endif // MAINWINDOW_H

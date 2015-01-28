@@ -1,22 +1,29 @@
 #ifndef CONSOLEWIDGET_H
 #define CONSOLEWIDGET_H
 
-#include <QMainWindow>
-#include <QTextEdit>
+#include <QPlainTextEdit>
 #include <QVBoxLayout>
-#include <QDockWidget>
+#include <log.h>
 
-class consoleWidget : public QDockWidget
+class UILogger;
+
+class consoleWidget : public QWidget
 {
+    Q_OBJECT
+
     public:
 
-        consoleWidget(QString, QMainWindow*);
-        void write(std::string);
-        void writeLine(std::string);
+        consoleWidget(void);
+
+    public slots:
+
+        void write(QString);
+        void writeLine(QString);
 
     private:
 
-        QTextEdit* logs;
+        QPlainTextEdit* logs;
+        UILogger* logger;
 };
 
 #endif // CONSOLEWIDGET_H

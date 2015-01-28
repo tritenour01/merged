@@ -15,6 +15,13 @@ void fileManager::edited(void)
         currentFile->info.edited = true;
 }
 
+bool fileManager::isEdited(void)
+{
+    if(currentFile)
+        return currentFile->info.edited;
+    return false;
+}
+
 int fileManager::createFile(void)
 {
     fileObject* newFile = new fileObject();
@@ -40,6 +47,7 @@ int fileManager::createFile(void)
         newFileName.append(QString::number(num));
 
     newFile->fileID = files->size();
+    newFile->info.name = newFileName;
     newFile->info.fileName = newFileName;
     newFile->info.filePath = "";
     newFile->info.edited = false;
@@ -58,6 +66,7 @@ int fileManager::openFile(QMainWindow* window)
     QFileInfo info(filePath);
     fileObject* openedFile = new fileObject();
     openedFile->fileID = files->size();
+    openedFile->info.name = info.baseName();
     openedFile->info.fileName = info.baseName() + ".scene";
     openedFile->info.filePath = info.path();
     openedFile->info.edited = false;
@@ -88,6 +97,7 @@ bool fileManager::saveFile(void)
             if(filePath == "")
                 return false;
             QFileInfo info(filePath);
+            currentFile->info.name = info.baseName();
             currentFile->info.fileName = info.baseName() + ".scene";
             currentFile->info.filePath = info.path();
         }
@@ -103,9 +113,22 @@ bool fileManager::saveFile(void)
     return false;
 }
 
-void fileManager::closeFile(void)
+int fileManager::closeFile(void)
 {
-
+    if(!currentFile)
+        return -1;
+    std::vector<fileObject*>::iterator it = files->begin();
+    for(; (*it)->fileID != currentFile->fileID &&  it != files->end(); it++);
+    int index = it - files->begin();
+    std::vector<fileObject*>::iterator ret = files->erase(it);
+    delete currentFile;
+    currentFile = NULL;
+    if(index >= files->size())
+        index = files->size() - 1;
+    if(index >= 0)
+        return files->at(index)->fileID;
+    else
+        return -1;
 }
 
 string fileManager::getData(void)
@@ -125,18 +148,22 @@ QString fileManager::getFileName(int ID)
     return "";
 }
 
+QString fileManager::getName(int ID)
+{
+    for(int i = 0; i < files->size(); i++)
+    {
+        if(files->at(i)->fileID == ID)
+            return files->at(i)->info.name;
+    }
+    return "";
+}
+
 void fileManager::setCurrentFile(int ID)
 {
     for(int i = 0; i < files->size(); i++){
-        QMessageBox mess;
-        mess.setText(QString::number(files->at(i)->fileID));
-        //mess.exec();
         if(files->at(i)->fileID == ID)
             currentFile = files->at(i);
     }
-    QMessageBox mess;
-    mess.setText("BAD");
-    //mess.exec();
 }
 
 void fileManager::read(FIELDS field, void* returnData)

@@ -1,10 +1,7 @@
 #ifndef PROPERTIESWIDGET_H
 #define PROPERTIESWIDGET_H
 
-#include <QMainWindow>
-#include <QDockWidget>
 #include <QScrollArea>
-#include <QComboBox>
 
 #include <fileManager.h>
 
@@ -17,10 +14,10 @@ class Header : public QWidget
         Header(QString);
 };
 
-class PropertiesWidget : public QDockWidget
+class PropertiesWidget : public QWidget
 {
     public:
-        PropertiesWidget(fileManager*, QString, QMainWindow*);
+        PropertiesWidget(fileManager*);
 
         enum PROPERTIES {IMAGESIZE, AMBIENT, BACKGROUND, RECURSIVE,
                          ANTIALIASING, POSITION, LOOKAT, UP};

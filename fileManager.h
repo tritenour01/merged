@@ -27,15 +27,17 @@ class fileManager
         int openFile(QMainWindow*);
         bool saveFile(void);
 
-        void closeFile(void);
+        int closeFile(void);
 
         string getData(void);
         QString getFileName(int);
+        QString getName(int);
 
         void write(FIELDS, void*);
         void read(FIELDS, void*);
 
         void edited(void);
+        bool isEdited(void);
 
         void setCurrentFile(int);
 

@@ -47,7 +47,13 @@ SOURCES += main.cpp \
     UIlogger.cpp \
     deviceManager.cpp \
     device.cpp \
-    connection.cpp
+    connection.cpp \
+    UIemitter.cpp \
+    settingDockWidget.cpp \
+    previewWindow.cpp \
+    jobWidget.cpp \
+    jobManager.cpp \
+    renderJob.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -66,4 +72,10 @@ HEADERS  += \
     UIlogger.h \
     deviceManager.h \
     device.h \
-    connection.h
+    connection.h \
+    UIemitter.h \
+    settingDockWidget.h \
+    previewWindow.h \
+    jobWidget.h \
+    jobManager.h \
+    renderJob.h

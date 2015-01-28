@@ -2,16 +2,14 @@
 #include <mainwindow.h>
 #include <QDebug>
 
-Worker::Worker(string path, int t, int b)
+Worker::Worker(string path, int t, int b, UIemitter* e)
 {
     image = NULL;
+    emitter = e;
 
     filePath = path;
     threads = t;
     blocks = b;
-
-    connect(this, SIGNAL(imageReady(QImage*)), window::getInstance(), SLOT(setImage(QImage*)));
-    connect(this, SIGNAL(renderComplete()), window::getInstance(), SLOT(renderDone()));
 }
 
 Worker::~Worker(void)
@@ -26,11 +24,12 @@ void Worker::Render(void)
         return;
 
     image = new QImage(R.getWidth(), R.getHeight(), QImage::Format_ARGB32);
-    emit imageReady(image);
 
-    UIimage img("image", R.getWidth(), R.getHeight(), image->bits());
+    img = new UIimage("image", R.getWidth(), R.getHeight(), image->bits());
+    emit imageReady(img);
 
-    Manager manager(threads, blocks, &img, &R);
+    Manager manager(threads, blocks, img, &R);
+    manager.setEmitter(emitter);
     manager.Render();
 
     image->save("image.png", "PNG");
@@ -38,7 +37,15 @@ void Worker::Render(void)
     emit renderComplete();
 }
 
-void Runner::runRenderer(string sceneData, int threads, int blocks)
+Runner::Runner(void)
+{
+    emitter = new UIemitter();
+
+    threads = 1;
+    blocks = 1;
+}
+
+void Runner::runRenderer(string sceneData)
 {
     QString cd = QDir::currentPath();
     string path = cd.toLocal8Bit().constData();
@@ -46,11 +53,40 @@ void Runner::runRenderer(string sceneData, int threads, int blocks)
     ofstream file(path.c_str());
     file<<sceneData;
 
-    Worker* work = new Worker(path, threads, blocks);
+    emitter->lineComplete(0, 1);
+
+    Worker* work = new Worker(path, threads, blocks, emitter);
     QThread* thread = new QThread();
     work->moveToThread(thread);
 
-    QObject::connect(thread, SIGNAL(started()), work, SLOT(Render()));
+    connect(thread, SIGNAL(started()), work, SLOT(Render()));
+    connect(work, SIGNAL(imageReady(UIimage*)), this, SLOT(setImage(UIimage*)));
+    connect(work, SIGNAL(renderComplete()), this, SLOT(done()));
 
     thread->start();
+}
+
+void Runner::setManager(JobManager* m)
+{
+    manager = m;
+}
+
+void Runner::setThreads(int t)
+{
+    threads = t;
+}
+
+void Runner::setBlocks(int b)
+{
+    blocks = b;
+}
+
+void Runner::setImage(UIimage* i)
+{
+    emit imageReady(i);
+}
+
+void Runner::done(void)
+{
+    emit renderComplete();
 }

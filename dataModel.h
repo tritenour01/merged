@@ -1,10 +1,9 @@
 #ifndef DATAMODEL_H
 #define DATAMODEL_H
 
-#include <QDebug>
-
 typedef struct fileInfo
 {
+    QString name;
     QString fileName;
     QString filePath;
     bool saved;
@@ -26,7 +25,6 @@ typedef struct antiData
 
     QString toString(void)
     {
-        qDebug()<<type;
         if(type == "basic")
             return "";
         else if(type == "uniform")
@@ -132,7 +130,7 @@ typedef struct fileObject
 
     QString toString(void)
     {
-        return scene.toString() + camera.toString() + text;
+        return scene.toString() + camera.toString() + "#\n" + text;
     }
 }fileObject;
 

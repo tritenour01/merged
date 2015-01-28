@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QPainter>
 #include <QTimer>
+#include <UIimage.h>
 
 class previewWidget : public QWidget
 {
@@ -13,7 +14,7 @@ class previewWidget : public QWidget
         previewWidget(QMainWindow*);
         void paintEvent(QPaintEvent*);
 
-        void setImage(QImage*);
+        void setImage(UIimage*);
         void imageChanged(void);
         void renderComplete(void);
 
