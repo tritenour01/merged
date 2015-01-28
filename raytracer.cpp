@@ -21,13 +21,16 @@ Raytracer::Raytracer(void)
 
 Raytracer::~Raytracer(void)
 {
-    //delete objects
+    for(int i = 0; i < objects.size(); i++)
+        delete objects.at(i);
 
     for(int i = 0; i < lights.size(); i++)
         delete lights.at(i);
 
     if(config.camera)
        delete config.camera;
+    delete config.sampler;
+    delete parser;
 }
 
 bool Raytracer::loadScene(string fileName)

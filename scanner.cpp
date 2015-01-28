@@ -119,6 +119,11 @@ Scanner::tokenType Scanner::nextToken()
         returnVal = RightCurly;
         nextChar();
     }
+    else if(currentChar == '#'){
+        token = currentChar;
+        returnVal = Separator;
+        nextChar();
+    }
     else{
         string c = "";
         c += currentChar;
@@ -274,6 +279,9 @@ void Scanner::debug(tokenType t)
             break;
         case Scanner::StreamDone:
             Log::writeLine("TOKEN STREAMDONE: " + token + " @ line " + Log::intToString(lineNumber));
+            break;
+        case Scanner::Separator:
+            Log::writeLine("TOKEN SEPARATOR: " + token + " @ line " + Log::intToString(lineNumber));
             break;
         case Scanner::ERROR:
             Log::writeLine("TOKEN ERROR: " + token);

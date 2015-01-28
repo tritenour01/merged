@@ -25,6 +25,8 @@ bool SceneParser::parseScene(string fileName)
 void SceneParser::parse(void)
 {
     parseConfig();
+    acceptToken(Scanner::Separator);
+    advance();
     parseObjects();
     parseToken(Scanner::StreamDone);
 }
@@ -36,6 +38,8 @@ void SceneParser::parseConfig(void)
     else{
         while(errorFlag == false && currentToken != Scanner::StreamDone)
         {
+            if(currentToken == Scanner::Separator)
+                return;
             acceptToken(Scanner::Id);
             string tokenText = scanner.tokenText();
 
@@ -692,6 +696,8 @@ string SceneParser::tokenName(Scanner::tokenType t, bool side)
             return "left curly bracket";
         case Scanner::RightCurly:
             return "right curly bracket";
+        case Scanner::Separator:
+            return "separator";
         case Scanner::ERROR:
             return "invalid token";
         case Scanner::StreamDone:

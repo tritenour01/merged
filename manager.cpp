@@ -9,7 +9,6 @@ Manager::Manager(int num, int blockSetup, Image* i, Raytracer* r)
 
     numBlocks = blockSetup * blockSetup;
     currentBlock = 0;
-    blocksComplete = 0;
     blocks = new Block[numBlocks];
     int x = 0;
     int y = 0;
@@ -32,6 +31,8 @@ Manager::Manager(int num, int blockSetup, Image* i, Raytracer* r)
         }
         y += yOffset;
     }
+
+    progress = new Progress(numThreads, blockSetup, blocks);
 }
 
 Manager::~Manager(void)
@@ -47,7 +48,6 @@ void Manager::Render(void)
     if(numThreads == 1)
         basicRender();
     else{
-        Log::write("0/" + Log::intToString(numBlocks) + " blocks            \r");
         for(int i = 0; i < numThreads; i++)
             threads.push_back(thread(threadedRender, this, i));
         threadsActive = numThreads;
@@ -59,11 +59,11 @@ void Manager::Render(void)
 void Manager::basicRender(void)
 {
     for(int i = 0; i < raytracer->getHeight(); i++){
-        Log::write("\r" + Log::intToString(i+1) + "/" + Log::intToString(raytracer->getHeight()) + " rows         ");
         for(int j = 0; j < raytracer->getWidth(); j++){
             Vector3 color = raytracer->tracePixel(j, i);
             img->setPixel(j, i, color);
         }
+        progress->lineComplete();
     }
 }
 
@@ -83,10 +83,7 @@ void Manager::threadedRender(int id)
                 img->setPixel(current->initX + j, current->initY + i, color);
             }
         }
-        completeMutex.lock();
-        blocksComplete++;
-        Log::write(Log::intToString(blocksComplete) + "/" + Log::intToString(numBlocks) + " blocks            \r");
-        completeMutex.unlock();
+        progress->blockComplete();
     }
 
     active.lock();
@@ -105,4 +102,9 @@ int Manager::nextBlock(void)
         value = -1;
     blockMutex.unlock();
     return value;
+}
+
+void Manager::setEmitter(Emitter* e)
+{
+    progress->setEmitter(e);
 }

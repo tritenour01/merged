@@ -13,6 +13,17 @@ Mesh::Mesh(std::vector<Triangle*>* t, std::vector<Vector3>* p, std::vector<Vecto
     }
 }
 
+Mesh::~Mesh(void)
+{
+    delete data;
+    delete points;
+    delete normals;
+
+    for(int i = 0; i < triangles->size(); i++)
+        delete triangles->at(i);
+    delete triangles;
+}
+
 bool Mesh::Intersection(Ray& ray, Hitpoint& hit)
 {
     if(useOctree){

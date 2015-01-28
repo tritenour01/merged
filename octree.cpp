@@ -9,6 +9,22 @@ Octree::Octree(int data, int depth)
     root = NULL;
 }
 
+Octree::~Octree(void)
+{
+    deleteTree(root);
+    delete root;
+    root = NULL;
+}
+
+void Octree::deleteTree(Node* current)
+{
+    if(current->children){
+        for(int i = 0; i < 8; i++)
+            deleteTree(&current->children[i]);
+        delete[] current->children;
+    }
+}
+
 int depth(Node* d)
 {
     if(d->children == NULL)
