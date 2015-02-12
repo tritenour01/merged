@@ -28,8 +28,8 @@ PropertiesWidget::PropertiesWidget(fileManager* m)
     layout->addWidget(ambient);
 
     QString backgroundFields[3] = {"R", "G", "B"};
-    background = new valueContainer(manager, BACKGROUND, "Background Color", 3, backgroundFields, valueContainer::TYPE_INT);
-    background->range(0, 255);
+    background = new valueContainer(manager, BACKGROUND, "Background Color", 3, backgroundFields, valueContainer::TYPE_FLOAT);
+    background->range(0, 1);
     layout->addWidget(background);
 
     QString recursionFields[3] = {"Depth", "Glossy Refl", "Glossy Refr"};

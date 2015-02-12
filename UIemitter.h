@@ -10,8 +10,6 @@ class UIemitter : public QObject, public Emitter
 
     public:
 
-        UIemitter();
-
         void lineComplete(int, int);
 
         void blockLineComplete(int);

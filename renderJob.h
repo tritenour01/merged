@@ -4,12 +4,15 @@
 #include <QString>
 #include <QImage>
 #include <previewWindow.h>
+#include <UIemitter.h>
 
-class RenderJob
+class RenderJob : public QObject
 {
+    Q_OBJECT
+
     public:
 
-        enum STATUS {Waiting, Rendering, Complete, Cancelled};
+        enum STATUS {Waiting, Rendering, Complete, Invalid, Aborted};
 
         RenderJob(QString, std::string, int, int);
 
@@ -18,14 +21,27 @@ class RenderJob
         int getNum(void);
         RenderJob::STATUS getStatus(void);
         int getProgress(void);
+        UIemitter* getEmitter(void);
         std::string getData(void);
 
-        void setStatus(RenderJob::STATUS);
+        void Render(void);
+        void Error(void);
+        void Done(void);
+
         void setImage(UIimage*);
 
         void showViewer(void);
 
         static QString statusToString(RenderJob::STATUS);
+
+    signals:
+
+        void statusChanged(RenderJob::STATUS);
+        void progressChanged(int);
+
+    private slots:
+
+        void updateProgress(int);
 
     private:
 
@@ -33,6 +49,7 @@ class RenderJob
         QString jobName;
         int nameNum;
         STATUS status;
+        UIemitter* emitter;
         int progress;
         //render time
         UIimage* image;

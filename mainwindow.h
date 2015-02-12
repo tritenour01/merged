@@ -11,7 +11,6 @@
 #include <QMessageBox>
 #include <QComboBox>
 
-#include <previewWindow.h>
 #include <editWidget.h>
 #include <fileManager.h>
 #include <runner.h>

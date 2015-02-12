@@ -43,7 +43,7 @@ typedef struct sceneData
 {
     int imageSize[2];
     float ambient;
-    int backgroundColor[3];
+    float backgroundColor[3];
     int recursive[3];
     antiData antialiasing;
 
@@ -75,6 +75,7 @@ typedef struct sceneData
 
                 "depth " + QString::number(recursive[0]) + "\n" +
                 "glossyReflectSampling " + QString::number(recursive[1]) + "\n" +
+                "glossyRefractSampling " + QString::number(recursive[2]) + "\n" +
 
                 antialiasing.toString();
     }

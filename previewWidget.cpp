@@ -51,7 +51,7 @@ void previewWidget::paintEvent(QPaintEvent* event)
     int xOffset = 0;
     int yOffset = 0;
 
-    if(imageRect.width() / imageRect.height() > screenRect.width() / screenRect.height()){
+    if((float)imageRect.width() / (float)imageRect.height() > (float)screenRect.width() / (float)screenRect.height()){
         scale = (float)screenRect.width() / (float)imageRect.width();
         yOffset = (float)(screenRect.height() - (float)imageRect.height() * scale) * 0.5;
     }
@@ -80,4 +80,9 @@ void previewWidget::renderComplete(void)
 {
     timer->stop();
     emit update();
+}
+
+void previewWidget::save(QString path)
+{
+    image->save(path, "PNG");
 }

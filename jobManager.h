@@ -23,6 +23,8 @@ class JobManager : public QObject
     private slots:
 
         void jobDone(void);
+        void jobInvalid(void);
+
         void setImage(UIimage*);
 
     private:

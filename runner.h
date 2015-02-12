@@ -36,6 +36,7 @@ class Worker : public QObject
 
         void imageReady(UIimage*);
         void renderComplete(void);
+        void renderInvalid(void);
 
     private:
 
@@ -55,7 +56,7 @@ class Runner : public QObject
     public:
 
         Runner(void);
-        void runRenderer(string);
+        void runRenderer(string, UIemitter*);
 
         void setThreads(int);
         void setBlocks(int);
@@ -66,11 +67,13 @@ class Runner : public QObject
 
         void setImage(UIimage*);
         void done(void);
+        void invalid(void);
 
     signals:
 
         void imageReady(UIimage*);
         void renderComplete(void);
+        void renderInvalid(void);
 
     private:
 

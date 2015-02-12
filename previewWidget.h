@@ -18,6 +18,8 @@ class previewWidget : public QWidget
         void imageChanged(void);
         void renderComplete(void);
 
+        void save(QString);
+
     private slots:
 
         void timerFinished(void);

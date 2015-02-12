@@ -16,14 +16,30 @@
 
 #include <jobManager.h>
 
-struct tableEntry
+class TableEntry : public QWidget
 {
-    int entryID;
-    QTableWidgetItem* nameItem;
-    QTableWidgetItem* statusID;
-    QTableWidgetItem* progressID;
-    QToolButton* viewButton;
-    QToolButton* deleteButton;
+    Q_OBJECT
+
+    public:
+
+        TableEntry(RenderJob*);
+
+        int getID(void);
+
+        QTableWidgetItem* nameItem;
+        QTableWidgetItem* statusItem;
+        QTableWidgetItem* progressItem;
+        QToolButton* viewButton;
+        QToolButton* deleteButton;
+
+    private slots:
+
+        void updateStatus(RenderJob::STATUS);
+        void updateProgress(int);
+
+    private:
+
+        int entryID;
 };
 
 class JobWidget : public QWidget
@@ -36,7 +52,6 @@ class JobWidget : public QWidget
 
         void addEntry(RenderJob*);
 
-        void updateStatus(int, RenderJob::STATUS);
         void imageViewable(int);
 
     private slots:
@@ -46,7 +61,7 @@ class JobWidget : public QWidget
 
     private:
 
-        vector<tableEntry*> entries;
+        vector<TableEntry*> entries;
 
         JobManager* manager;
 

@@ -7,9 +7,12 @@ RenderJob::RenderJob(QString name, std::string data, int num, int id)
     nameNum = num;
     status = Waiting;
     progress = 0;
+    emitter = new UIemitter();
     image = NULL;
     preview = NULL;
     jobData = data;
+
+    connect(emitter, SIGNAL(updateProgress(int)), this, SLOT(updateProgress(int)));
 }
 
 int RenderJob::getID(void)
@@ -37,14 +40,32 @@ int RenderJob::getProgress(void)
     return progress;
 }
 
+UIemitter* RenderJob::getEmitter(void)
+{
+    return emitter;
+}
+
 std::string RenderJob::getData(void)
 {
     return jobData;
 }
 
-void RenderJob::setStatus(RenderJob::STATUS s)
+void RenderJob::Render(void)
 {
-    status = s;
+    status = Rendering;
+    emit statusChanged(status);
+}
+
+void RenderJob::Error(void)
+{
+    status = Invalid;
+    emit statusChanged(status);
+}
+
+void RenderJob::Done(void)
+{
+    status = Complete;
+    emit statusChanged(status);
 }
 
 void RenderJob::setImage(UIimage* i)
@@ -59,6 +80,14 @@ void RenderJob::showViewer(void)
     preview->show();
 }
 
+void RenderJob::updateProgress(int p)
+{
+    progress = p;
+    if(preview)
+        preview->renderProgress(p);
+    emit progressChanged(p);
+}
+
 QString RenderJob::statusToString(RenderJob::STATUS s)
 {
     switch(s)
@@ -69,7 +98,9 @@ QString RenderJob::statusToString(RenderJob::STATUS s)
             return "Rendering";
         case RenderJob::Complete:
             return "Complete";
-        case RenderJob::Cancelled:
+        case RenderJob::Invalid:
+            return "Invalid";
+        case RenderJob::Aborted:
             return "Cancelled";
     }
 }

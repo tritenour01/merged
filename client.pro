@@ -17,15 +17,15 @@ INCLUDEPATH += $$quote(C:/Program Files (x86)\CodeBlocks\MinGW\x86_64-w64-mingw3
 INCLUDEPATH += $$quote(C:\Users\Tim Ritenour\Documents\C++\raytracer\raytracer)
 
 CONFIG(Debug){
-    LIBS += -static -LC:\raytracerBin\ -lraytracerd
-    PRE_TARGETDEPS += C:\raytracerBin\libraytracerd.a
+    LIBS += -static -L"C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Debug" -lraytracer
+    PRE_TARGETDEPS += "C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Debug\libraytracer.a"
 
     LIBS += -static -L"C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib" -lsfml-graphics-d
     PRE_TARGETDEPS += "C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib\libsfml-graphics-d.a"
 }
 else{
-    LIBS += -static -LC:/raytracerBin/ -lraytracer
-    PRE_TARGETDEPS += C:/raytracerBin/libraytracer.a
+    LIBS += -static -L"C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Release" -lraytracer
+    PRE_TARGETDEPS += "C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Release\libraytracer.a"
 
     LIBS += -static -L"C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib" -lsfml-graphics
     PRE_TARGETDEPS += "C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib\libsfml-graphics.a"

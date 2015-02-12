@@ -13,6 +13,7 @@ class UIimage : public QObject, public Image
 
         UIimage(string, int, int, unsigned char*);
         void setPixel(int, int, Vector3&);
+        Vector3 getPixel(int, int);
         unsigned char* getPtr(void);
 
         int getWidth(void);

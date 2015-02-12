@@ -62,6 +62,12 @@ void Loader::parseConfig(void)
 
                 data->scene.recursive[1] = sampling;
             }
+            else if(tokenText == "glossyRefractSampling"){
+                int sampling;
+                parseNumber(sampling);
+
+                data->scene.recursive[2] = sampling;
+            }
             else if(tokenText == "uniform"){
                 int level;
                 parseNumber(level);

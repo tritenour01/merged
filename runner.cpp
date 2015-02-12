@@ -20,8 +20,10 @@ Worker::~Worker(void)
 void Worker::Render(void)
 {
     Raytracer R;
-    if(!R.loadScene(filePath))
+    if(!R.loadScene(filePath)){
+        emit renderInvalid();
         return;
+    }
 
     image = new QImage(R.getWidth(), R.getHeight(), QImage::Format_ARGB32);
 
@@ -39,19 +41,21 @@ void Worker::Render(void)
 
 Runner::Runner(void)
 {
-    emitter = new UIemitter();
+    emitter = NULL;
 
     threads = 1;
     blocks = 1;
 }
 
-void Runner::runRenderer(string sceneData)
+void Runner::runRenderer(string sceneData, UIemitter* e)
 {
     QString cd = QDir::currentPath();
     string path = cd.toLocal8Bit().constData();
     path += "/.temp.scene";
     ofstream file(path.c_str());
     file<<sceneData;
+
+    emitter = e;
 
     emitter->lineComplete(0, 1);
 
@@ -62,6 +66,7 @@ void Runner::runRenderer(string sceneData)
     connect(thread, SIGNAL(started()), work, SLOT(Render()));
     connect(work, SIGNAL(imageReady(UIimage*)), this, SLOT(setImage(UIimage*)));
     connect(work, SIGNAL(renderComplete()), this, SLOT(done()));
+    connect(work, SIGNAL(renderInvalid()), this, SLOT(invalid()));
 
     thread->start();
 }
@@ -89,4 +94,9 @@ void Runner::setImage(UIimage* i)
 void Runner::done(void)
 {
     emit renderComplete();
+}
+
+void Runner::invalid(void)
+{
+    emit renderInvalid();
 }

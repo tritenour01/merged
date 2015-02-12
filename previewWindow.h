@@ -7,6 +7,7 @@
 #include <QStatusBar>
 #include <previewWidget.h>
 #include <UIImage.h>
+#include <QToolButton>
 
 class PreviewWindow : public QMainWindow
 {
@@ -25,11 +26,13 @@ class PreviewWindow : public QMainWindow
     private slots:
 
         void imageChanged(void);
+        void save(void);
 
     private:
 
         previewWidget* preview;
         QProgressBar* progress;
+        QToolButton* saveButton;
 };
 
 #endif // PREVIEWWINDOW_H_INCLUDED

@@ -10,6 +10,7 @@ JobManager::JobManager(Runner* r)
 
     connect(runner, SIGNAL(imageReady(UIimage*)), this, SLOT(setImage(UIimage*)));
     connect(runner, SIGNAL(renderComplete()), this, SLOT(jobDone()));
+    connect(runner, SIGNAL(renderInvalid()), this, SLOT(jobInvalid()));
 }
 
 void JobManager::addJob(QString sceneName, string data)
@@ -52,15 +53,22 @@ void JobManager::runJob(void)
     busy = true;
 
     currentJob = job;
-    currentJob->setStatus(RenderJob::Rendering);
-    widget->updateStatus(currentJob->getID(), currentJob->getStatus());
-    runner->runRenderer(currentJob->getData());
+    currentJob->Render();
+    runner->runRenderer(currentJob->getData(), currentJob->getEmitter());
 }
 
 void JobManager::jobDone(void)
 {
-    currentJob->setStatus(RenderJob::Complete);
-    widget->updateStatus(currentJob->getID(), currentJob->getStatus());
+    currentJob->Done();
+    currentJob = NULL;
+    busy = false;
+
+    runJob();
+}
+
+void JobManager::jobInvalid(void)
+{
+    currentJob->Error();
     currentJob = NULL;
     busy = false;
 
