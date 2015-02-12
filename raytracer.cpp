@@ -11,6 +11,7 @@ Raytracer::Raytracer(void)
     config.backColor = Vector3(0.0f, 0.0f, 0.0f);
     config.reflectionDepth = 1;
     config.glossyReflectSampling = 1;
+    config.glossyRefractSampling = 1;
     config.recursionThreshold = 1.0f / 256.0f;
     config.sampler = NULL;
 
@@ -167,18 +168,20 @@ Vector3 Raytracer::computeColor(Ray& ray, int depth, float factor)
     //reflection amount
     Vector3 reflection(0, 0, 0);
     if(ray.s->getMaterial().getReflective() > 0.0f){
-        if(ray.s->getMaterial().getGlossiness() == 0.0f)
-            reflection = calculateReflection(ray, n, depth, factor);
-        else
+        if(ray.s->getMaterial().getGlossiness() > 0.0f && depth == 0)
             reflection = calculateGlossyReflection(ray, n, depth, factor);
+        else
+            reflection = calculateReflection(ray, n, depth, factor);
     }
 
     //refraction amount
     Vector3 refraction(0, 0, 0);
-    if(ray.s->getMaterial().getRefraction() > 0.0f)// && depth == 0)
-        //refraction = calculateGlossyRefraction(ray, n, depth, factor);
-    //else if(ray.s->getMaterial().getRefraction() > 0.0f)
-        refraction = calculateRefraction(ray, n, depth, factor);
+    if(ray.s->getMaterial().getRefraction() > 0.0f){
+        if(ray.s->getMaterial().getGlossiness() > 0.0f && depth == 0)
+            refraction = calculateGlossyRefraction(ray, n, depth, factor);
+        else
+            refraction = calculateRefraction(ray, n, depth, factor);
+    }
 
     Vector3 amb = /*calculateAO(ray, 100) * */config.ambient * ray.s->getMaterial().getDiffuse(ray);
 
@@ -275,13 +278,15 @@ Vector3 Raytracer::calculateReflection(Ray& ray, Vector3& n, int depth, float fa
     Vector3 c;
     if(intersectRay(reflect)){
         c = ray.s->getMaterial().getReflective() * computeColor(reflect, depth + 1, factor * ray.s->getMaterial().getReflective());
-        Vector3 filter = ray.s->getMaterial().getReflectColor();
-        c.x *= filter.x;
-        c.y *= filter.y;
-        c.z *= filter.z;
     }
     else
-        c = Vector3(0, 0, 0);
+        c = ray.s->getMaterial().getReflective() * config.backColor;
+
+    Vector3 filter = ray.s->getMaterial().getReflectColor();
+    c.x *= filter.x;
+    c.y *= filter.y;
+    c.z *= filter.z;
+
     return c;
 }
 
@@ -362,7 +367,7 @@ Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, flo
             c = computeColor(reflect, depth + 1, factor * reflectComp);
     }
     else
-        c = Vector3(0, 0, 0);
+        c = config.backColor;
 
     if(TIR)
         return c;
@@ -370,13 +375,13 @@ Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, flo
     //compute the refraction color
     Ray refract(ray.point, result);
     if(!intersectRay(refract))
-        return Vector3(0, 0, 0);
+        return config.backColor;
     Vector3 color = (1.0f - reflectComp) * ray.s->getMaterial().getRefraction() * computeColor(refract, depth + 1, factor  * (1.0f - reflectComp));
-    if(Vector3::DotProduct(view, normal) >= 0){
-        color.x *= 0.9f;
-        color.y *= 0.9f;
-        color.z *= 0.9f;
-    }
+    //if(Vector3::DotProduct(view, normal) >= 0){
+        //color.x *= 0.9f;
+        //color.y *= 0.9f;
+        //color.z *= 0.9f;
+    //}
     return color + reflectComp * c;
 }
 
@@ -479,15 +484,19 @@ Vector3 Raytracer::calculateGlossyReflection(Ray& ray, Vector3& n, int depth, fl
             if(Vector3::DotProduct(d, n) > 0){
                 Ray test(ray.point, d);
                 if(intersectRay(test)){
-                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getReflective());
+                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getReflective() / (float)config.glossyReflectSampling);
                 }
+                else
+                    color += config.backColor;
             }
             else{
                 d = R - (u * diskSize * cosf(theta + currentX) * tangent) - (u * diskSize * sinf(theta + currentX) * bitangent);
                 Ray test(ray.point, d);
                 if(intersectRay(test)){
-                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getReflective());
+                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getReflective() / (float)config.glossyReflectSampling);
                 }
+                else
+                    color += config.backColor;
             }
 
             currentX += Xoffset;
@@ -600,17 +609,14 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
     float Xoffset = 2.0f * 3.1415938f / (float)config.glossyReflectSampling;
     float Yoffset = 1.0f / (float)config.glossyReflectSampling;
 
-    //float angle = 80.0f * ray.s->getMaterial().getGlossiness();
-    float angle = 20.0f;
+    float angle = 80.0f * ray.s->getMaterial().getGlossiness();
+    //float angle = 20.0f;
     float diskSize = tanf(angle * 3.1415938f / 360.0f);
 
     Vector3 color(0, 0, 0);
 
-    int xSamp = 4;
-    int ySamp = 4;
-
-    for(int i = 0; i < ySamp; i++){
-        for(int j = 0; j < xSamp; j++){
+    for(int i = 0; i < config.glossyRefractSampling; i++){
+        for(int j = 0; j < config.glossyRefractSampling; j++){
             float u = (float)rand() / RAND_MAX * Yoffset + currentY;
             float v = (float)rand() / RAND_MAX * Xoffset;
             float theta = 2.0f * 3.1415938f * v;
@@ -620,15 +626,19 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
             if(Vector3::DotProduct(d, n) > 0){
                 Ray test(ray.point, d);
                 if(intersectRay(test)){
-                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getRefraction());
+                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getRefraction() / (float)config.glossyRefractSampling);
                 }
+                else
+                    color += config.backColor;
             }
             else{
                 d = result - (u * diskSize * cosf(theta + currentX) * tangent) - (u * diskSize * sinf(theta + currentX) * bitangent);
                 Ray test(ray.point, d);
                 if(intersectRay(test)){
-                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getRefraction());
+                    color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getRefraction() / (float)config.glossyRefractSampling);
                 }
+                else
+                    color += config.backColor;
             }
 
             currentX += Xoffset;
@@ -637,5 +647,5 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
         currentY += Yoffset;
     }
 
-    return color * ray.s->getMaterial().getRefraction() * (1.0f / ((float)xSamp * (float)ySamp));
+    return color * ray.s->getMaterial().getRefraction() * (1.0f / ((float)config.glossyRefractSampling * (float)config.glossyRefractSampling));
 }

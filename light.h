@@ -11,6 +11,7 @@ class Light
     public:
 
         Light(Raytracer*, Vector3, Vector3, Vector3, float);
+        virtual ~Light(){}
 
         Vector3 getPos(void);
         Vector3 getColor(void);

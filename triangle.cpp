@@ -21,7 +21,6 @@ Triangle::Triangle(Vector3* a, Vector3* b, Vector3* c, bool d)
     //compute the plane's distance vector
     dist = -Vector3::DotProduct(n, *p1);
 
-    destroy = d;
     smooth = false;
 }
 

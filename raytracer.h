@@ -25,6 +25,7 @@ struct Config
     int reflectionDepth;
     float recursionThreshold;
     int glossyReflectSampling;
+    int glossyRefractSampling;
 
     Camera* camera;
     Sampler* sampler;

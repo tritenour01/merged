@@ -11,6 +11,7 @@ class Sampler
     public:
 
         Sampler(Raytracer*, Config&);
+        virtual ~Sampler(){}
 
         virtual Vector3 samplePixel(int, int) =0;
 

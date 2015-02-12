@@ -13,8 +13,8 @@ class Shape
     public:
 
         Shape(void);
+        virtual ~Shape(){}
 
-        //virtual functions for all objects
         virtual void getUV(Vector3&, Ray&, float&, float&) =0;
 
         bool intersectRay(Ray&, Hitpoint&);

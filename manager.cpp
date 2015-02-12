@@ -62,7 +62,15 @@ void Manager::basicRender(void)
         for(int j = 0; j < raytracer->getWidth(); j++){
             Vector3 color = raytracer->tracePixel(j, i);
             img->setPixel(j, i, color);
+
+            #ifdef DEBUG
+            currentX++;
+            #endif // DEBUG
         }
+        #ifdef DEBUG
+        currentX = 0;
+        currentY++;
+        #endif // DEBUG
         progress->lineComplete();
     }
 }

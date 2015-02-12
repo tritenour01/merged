@@ -121,6 +121,12 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                         }
                         // First face
                         Triangle* newTri = new Triangle(&points[v0], &points[v2], &points[v1], false);
+
+                        int maxNormal = normals.size() - 1;
+                        if(n0 > maxNormal || n1 > maxNormal || n2 > maxNormal){
+                            Log::writeLine("Invalid normal index");
+                            return false;
+                        }
                         newTri->setNormals(&normals[n0], &normals[n2], &normals[n1]);
                         if(faceTex.size() > 3)
                                 newTri->setUV(texCoords[tc0], texCoords[tc2], texCoords[tc1]);
@@ -135,6 +141,12 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                                 tc2 = faceTex[i];
                             }
                             newTri = new Triangle(&points[v0], &points[v2], &points[v1], false);
+
+                            if(n0 > maxNormal || n1 > maxNormal || n2 > maxNormal){
+                                Log::writeLine("Invalid normal index");
+                                return false;
+                            }
+
                             newTri->setNormals(&normals[n0], &normals[n2], &normals[n1]);
                             if(faceTex.size() > 3)
                                 newTri->setUV(texCoords[tc0], texCoords[tc2], texCoords[tc1]);
@@ -142,6 +154,13 @@ bool Parser::loadObj(string fileName, vector<Triangle*>& faces, vector<Vector3>&
                         }
                     } else {
                         Triangle* newTri = new Triangle(&points[face[0]], &points[face[2]], &points[face[1]], false);
+
+                        int maxNormal = normals.size() - 1;
+                        if(faceNormal[0] > maxNormal || faceNormal[1] > maxNormal || faceNormal[1] > maxNormal){
+                            Log::writeLine("Invalid normal index");
+                            return false;
+                        }
+
                         newTri->setNormals(&normals[faceNormal[0]], &normals[faceNormal[2]], &normals[faceNormal[1]]);
                         if(faceTex.size() == 3)
                             newTri->setUV(texCoords[faceTex[0]], texCoords[faceTex[2]], texCoords[faceTex[1]]);

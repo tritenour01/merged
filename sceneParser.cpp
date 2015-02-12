@@ -67,6 +67,12 @@ void SceneParser::parseConfig(void)
 
                 config.glossyReflectSampling = sampling;
             }
+            else if(tokenText == "glossyRefractSampling"){
+                int sampling;
+                parseNumber(sampling);
+
+                config.glossyRefractSampling = sampling;
+            }
             else if(tokenText == "uniform"){
                 int level;
                 parseNumber(level);
@@ -535,6 +541,20 @@ void SceneParser::parseMaterial(Shape* s)
 
             s->getMaterial().setRefraction(refract);
             s->getMaterial().setIOR(IOR);
+        }
+        else if(tokenText == "glossyRefract"){
+            float refract;
+            parseNumber(refract);
+
+            float IOR;
+            parseNumber(IOR);
+
+            float glossy;
+            parseNumber(glossy);
+
+            s->getMaterial().setRefraction(refract);
+            s->getMaterial().setIOR(IOR);
+            s->getMaterial().setGlossiness(glossy);
         }
         else if(tokenText == "texture"){
             parseToken(Scanner::String);

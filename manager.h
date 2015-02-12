@@ -4,10 +4,18 @@
 #include "image.h"
 #include "raytracer.h"
 #include "log.h"
+#include "progress.h"
 
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+
+struct Block{
+    int initX;
+    int initY;
+    int width;
+    int height;
+};
 
 class Manager
 {
@@ -15,7 +23,10 @@ class Manager
 
         Manager(int, int, Image*, Raytracer*);
         ~Manager(void);
+
         void Render(void);
+
+        void setEmitter(Emitter*);
 
     private:
 
@@ -28,12 +39,6 @@ class Manager
         Image* img;
         Raytracer* raytracer;
 
-        struct Block{
-            int initX;
-            int initY;
-            int width;
-            int height;
-        };
         int currentBlock;
         int numBlocks;
         Block* blocks;
@@ -45,8 +50,7 @@ class Manager
         void basicRender(void);
         void threadedRender(int);
 
-        int blocksComplete;
-        mutex completeMutex;
+        Progress* progress;
 };
 
 #endif // MANAGER_H_INCLUDED

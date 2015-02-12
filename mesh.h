@@ -12,6 +12,7 @@ class Mesh : public Shape
     public:
 
         Mesh(std::vector<Triangle*>*, std::vector<Vector3>*, std::vector<Vector3>*);
+        ~Mesh(void);
 
         void getUV(Vector3&, Ray&, float&, float&);
 

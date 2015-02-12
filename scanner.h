@@ -11,7 +11,8 @@ class Scanner
     public:
 
         enum tokenType {Id, Int, Float, String, Comma, LeftAngle,
-                        RightAngle, LeftCurly, RightCurly, StreamDone, ERROR};
+                        RightAngle, LeftCurly, RightCurly, StreamDone,
+                        Separator, ERROR};
 
         bool setupScanner(string);
         tokenType nextToken(void);

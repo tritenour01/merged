@@ -39,7 +39,6 @@ class Triangle : public Shape
         Vector3 tex2;
         Vector3 tex3;
 
-        bool destroy;
         bool smooth;
 };
 

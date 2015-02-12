@@ -16,39 +16,26 @@ Octree::~Octree(void)
     root = NULL;
 }
 
-void Octree::deleteTree(Node* current)
+void Octree::deleteTree(Node* n)
 {
-    if(current->children){
+    if(n->children){
         for(int i = 0; i < 8; i++)
-            deleteTree(&current->children[i]);
-        delete[] current->children;
+            deleteTree(&n->children[i]);
+        delete[] n->children;
     }
 }
 
-int depth(Node* d)
+void Octree::computeNum(Node* n)
 {
-    if(d->children == NULL)
-        return 1;
-
-    int maxVal = 0;
-    for(int i = 0; i < 8; i++){
-        maxVal = max(maxVal, depth(&d->children[i]));
-    }
-
-    return maxVal + 1;
-}
-
-void compute(Node* d)
-{
-    if(d->children == NULL){
-        d->num = d->data.size();
+    if(n->children == NULL){
+        n->num = n->data.size();
         return;
     }
 
-    d->num = 0;
+    n->num = 0;
     for(int i = 0; i < 8; i++){
-        compute(&d->children[i]);
-        d->num += d->children[i].num;
+        computeNum(&n->children[i]);
+        n->num += n->children[i].num;
     }
 }
 
@@ -56,13 +43,12 @@ void Octree::createTree(vector<Triangle*>* newData)
 {
     computeBounds(*newData, minBound, maxBound);
 
-    root = new Node;
+    root = new Node();
     root->children = NULL;
     root->parent = NULL;
 
     insertTriangles(*newData, minBound, maxBound, root, 1);
-
-    compute(root);
+    computeNum(root);
 
     Log::writeLine("Mesh Bounds:");
     Log::writeLine("  " + minBound.toString());
@@ -110,104 +96,96 @@ void Octree::insertTriangles(vector<Triangle*>& triangles, Vector3 minCorner, Ve
 
 bool Octree::intersectRay(Ray& ray, Hitpoint& h)
 {
-    char mask = 0;
+    char vmask = 0;
 
-    float x1, x2, y1, y2, z1, z2;
+    BoundInfo b;
+
     if(ray.dir.x > 0){
-        x1 = (minBound.x - ray.origin.x) / ray.dir.x;
-        x2 = (maxBound.x - ray.origin.x) / ray.dir.x;
+        b.Min[0] = (minBound.x - ray.origin.x) / ray.dir.x;
+        b.Max[0] = (maxBound.x - ray.origin.x) / ray.dir.x;
     }
     else if(ray.dir.x < 0){
-        mask |= 1;
-        x1 = (maxBound.x - ray.origin.x) / ray.dir.x;
-        x2 = (minBound.x - ray.origin.x) / ray.dir.x;
+        vmask |= 1;
+        b.Min[0] = (maxBound.x - ray.origin.x) / ray.dir.x;
+        b.Max[0] = (minBound.x - ray.origin.x) / ray.dir.x;
     }
     else{
-        x1 = -DBL_MAX;
-        x2 = DBL_MAX;
+        b.Min[0] = -DBL_MAX;
+        b.Max[0] = DBL_MAX;
     }
 
     if(ray.dir.y >= 0){
-        y1 = (minBound.y - ray.origin.y) / ray.dir.y;
-        y2 = (maxBound.y - ray.origin.y) / ray.dir.y;
+        b.Min[1] = (minBound.y - ray.origin.y) / ray.dir.y;
+        b.Max[1] = (maxBound.y - ray.origin.y) / ray.dir.y;
     }
     else{
-        mask |= 4;
-        y1 = (maxBound.y - ray.origin.y) / ray.dir.y;
-        y2 = (minBound.y - ray.origin.y) / ray.dir.y;
+        vmask |= 4;
+        b.Min[1] = (maxBound.y - ray.origin.y) / ray.dir.y;
+        b.Max[1] = (minBound.y - ray.origin.y) / ray.dir.y;
     }
 
     if(ray.dir.z > 0){
-        z1 = (minBound.z - ray.origin.z) / ray.dir.z;
-        z2 = (maxBound.z - ray.origin.z) / ray.dir.z;
+        b.Min[2] = (minBound.z - ray.origin.z) / ray.dir.z;
+        b.Max[2] = (maxBound.z - ray.origin.z) / ray.dir.z;
     }
     else if(ray.dir.z < 0){
-        mask |= 2;
-        z1 = (maxBound.z - ray.origin.z) / ray.dir.z;
-        z2 = (minBound.z - ray.origin.z) / ray.dir.z;
+        vmask |= 2;
+        b.Min[2] = (maxBound.z - ray.origin.z) / ray.dir.z;
+        b.Max[2] = (minBound.z - ray.origin.z) / ray.dir.z;
     }
     else{
-        z1 = -DBL_MAX;
-        z2 = DBL_MAX;
+        b.Min[2] = -DBL_MAX;
+        b.Max[2] = DBL_MAX;
     }
 
-    if(max(max(x1, y1), z1) < min(min(x2, y2), z2)){
-        h.t = DBL_MAX;
-        float Min[3] = {x1, y1, z1};
-        float Max[3] = {x2, y2, z2};
 
-        return intersectSubTrees(ray, h, root, Min, Max, mask);
-        //return drawTree(ray, t, root, 0, Min, Max, mask);
+    b.lmax = max(max(b.Min[0], b.Min[1]), b.Min[2]);
+    b.umin = min(min(b.Max[0], b.Max[1]), b.Max[2]);
+    if(b.lmax < b.umin){
+        h.t = DBL_MAX;
+
+        return intersectSubTrees(ray, h, root, b, vmask);
     }
     return false;
 }
 
-inline bool overlap(float* Min, float* Max)
+void Octree::computeIntersectRange(char mask, BoundInfo& b, float* Min, float* Mid, float* Max)
 {
-    return max(max(max(Min[0], Min[1]), Min[2]), 0.0f) < min(min(Max[0], Max[1]), Max[2]);
-}
-/*
-bool Octree::drawTree(Ray& ray, float& t, Node* current, int depth, float* Min, float* Max, char mask)
-{
-    if(current->num == 0 || !overlap(Min, Max))
-        return false;
-    if(depth >= d || current->children == NULL){
-        bool intersect = false;
-        Hitpoint hit;
-        if(current->num > 0 && current->aabb.bounds->intersectRay(ray, hit)){
-            intersect = true;
-            if(hit.t > Ray::SMALL && hit.t < t){
-                t = hit.t;
-                ray.s = current->aabb.bounds;
-            }
-        }
-        return intersect;
+    if(mask & 1){
+        b.Min[0] = Mid[0];
+        b.Max[0] = Max[0];
+    }
+    else{
+        b.Min[0] = Min[0];
+        b.Max[0] = Mid[0];
     }
 
-    float midX = (Min[0] + Max[0]) / 2.0;
-    float midY = (Min[1] + Max[1]) / 2.0;
-    float midZ = (Min[2] + Max[2]) / 2.0;
-    float Mid[3] = {midX, midY, midZ};
+    if(mask & 4){
+        b.Min[1] = Mid[1];
+        b.Max[1] = Max[1];
+    }
+    else{
+        b.Min[1] = Min[1];
+        b.Max[1] = Mid[1];
+    }
 
-    float otherBounds[12][3] = {{Mid[0], Min[1], Min[2]}, {Min[0], Min[1], Mid[2]}, {Mid[0], Min[1], Mid[2]},
-                                {Min[0], Mid[1], Min[2]}, {Mid[0], Mid[1], Min[2]}, {Min[0], Mid[1], Mid[2]},
-                                {Max[0], Mid[1], Mid[2]}, {Mid[0], Mid[1], Max[2]}, {Max[0], Mid[1], Max[2]},
-                                {Mid[0], Max[1], Mid[2]}, {Max[0], Max[1], Mid[2]}, {Mid[0], Max[1], Max[2]}};
+    if(mask & 2){
+        b.Min[2] = Mid[2];
+        b.Max[2] = Max[2];
+    }
+    else{
+        b.Min[2] = Min[2];
+        b.Max[2] = Mid[2];
+    }
 
-    bool intersect = false;
-    drawTree(ray, t, &current->children[mask], depth + 1, Min, Mid, mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 1], depth + 1, otherBounds[0], otherBounds[6], mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 2], depth + 1, otherBounds[1], otherBounds[7], mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 3], depth + 1, otherBounds[2], otherBounds[8], mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 4], depth + 1, otherBounds[3], otherBounds[9], mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 5], depth + 1, otherBounds[4], otherBounds[10], mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 6], depth + 1, otherBounds[5], otherBounds[11], mask) ? intersect = true : intersect;
-    drawTree(ray, t, &current->children[mask ^ 7], depth + 1, Mid, Max, mask) ? intersect = true : intersect;
+    b.lmax = max(max(b.Min[0], b.Min[1]), b.Min[2]);
+    if(b.lmax < 0.0f)
+        b.lmax = 0.0f;
 
-    return intersect;
+    b.umin = min(min(b.Max[0], b.Max[1]), b.Max[2]);
 }
-*/
-bool Octree::intersectSubTrees(Ray& ray, Hitpoint& Hit, Node* current, float* Min, float* Max, char mask)
+
+bool Octree::intersectSubTrees(Ray& ray, Hitpoint& Hit, Node* current, BoundInfo& b, char vmask)
 {
     if(current->children == NULL){
         bool intersect = false;
@@ -226,86 +204,79 @@ bool Octree::intersectSubTrees(Ray& ray, Hitpoint& Hit, Node* current, float* Mi
         return intersect;
     }
 
-    float midX = 0.0f;
-    //if(Min[0] > -DBL_MAX)
-        midX = (Min[0] + Max[0]) / 2.0;
-    //else{
-    //    if(ray.origin.x < (current->aabb.bounds->minCorner.x + current->aabb.bounds->maxCorner.x) / 2.0f)
-    //        midX = DBL_MAX;
-    //    else
-    //        midX = -DBL_MAX;
-    //}
-    float midY = (Min[1] + Max[1]) / 2.0;
-    float midZ = 0.0f;
-    //if(Min[2] > -DBL_MAX)
-        midZ = (Min[2] + Max[2]) / 2.0;
-    //else{
-    //    if(ray.origin.x < (current->aabb.bounds->minCorner.z + current->aabb.bounds->maxCorner.z) / 2.0f)
-    //        midZ = DBL_MAX;
-    //    else
-    //        midZ = -DBL_MAX;
-    //}
-    float Mid[3] = {midX, midY, midZ};
+    float midX = (b.Min[0] + b.Max[0]) / 2.0;
+    float midY = (b.Min[1] + b.Max[1]) / 2.0;
+    float midZ = (b.Min[2] + b.Max[2]) / 2.0;
+    float Mid[3] = {midX, midZ, midY};
 
-    float otherBounds[12][3] = {{Mid[0], Min[1], Min[2]}, {Min[0], Min[1], Mid[2]}, {Mid[0], Min[1], Mid[2]},
-                                {Min[0], Mid[1], Min[2]}, {Mid[0], Mid[1], Min[2]}, {Min[0], Mid[1], Mid[2]},
-                                {Max[0], Mid[1], Mid[2]}, {Mid[0], Mid[1], Max[2]}, {Max[0], Mid[1], Max[2]},
-                                {Mid[0], Max[1], Mid[2]}, {Max[0], Max[1], Mid[2]}, {Mid[0], Max[1], Max[2]}};
+    char maskList[3];
+    if(midX < midZ){
+        maskList[0] = 1;
+        maskList[1] = 2;
+    }
+    else{
+        maskList[0] = 2;
+        maskList[1] = 1;
+    }
 
-    int numHit = 0;
-    int ID[8];
-    float value[8];
-    if(current->children[mask].num > 0 && overlap(Min, Mid)){
-        ID[0] = 0;
-        value[0] = max(max(max(Min[0], Min[1]), Min[2]), 0.0f);
-        numHit = 1;
+    if(midY < Mid[maskList[0] - 1]){
+        char tmp = maskList[1];
+        maskList[1] = maskList[0];
+        maskList[2] = tmp;
+        maskList[0] = 4;
     }
-    for(int i = 0; i < 6; i++){
-        if(current->children[mask ^ (i + 1)].num > 0 && overlap(otherBounds[i], otherBounds[6 + i])){
-            float val =  max(max(max(otherBounds[i][0], otherBounds[i][1]), otherBounds[i][2]), 0.0f);
-            int j;
-            for(j = 0; j < numHit && val > value[j]; j++);
-            int newPos = j;
-            for(j = numHit; j > newPos; j--){
-                ID[j] = ID[j - 1];
-                value[j] = value[j - 1];
-            }
-            ID[newPos] = i + 1;
-            value[newPos] = val;
-            numHit++;
-        }
+    else if(midY < Mid[maskList[1] - 1]){
+        maskList[2] = maskList[1];
+        maskList[1] = 4;
     }
-    if(current->children[mask ^ 7].num > 0 && overlap(Mid, Max)){
-        float val =  max(max(max(Mid[0], Mid[1]), Mid[2]), 0.0f);
-        int j;
-        for(j = 0; j < numHit && val > value[j]; j++);
-        int newPos = j;
-        for(j = numHit; j > newPos; j--){
-            ID[j] = ID[j - 1];
-            value[j] = value[j - 1];
-        }
-        ID[newPos] = 7;
-        value[newPos] = val;
-        numHit++;
-    }
+    else
+        maskList[2] = 4;
+
+    Mid[1] = midY;
+    Mid[2] = midZ;
+
+    char cmask = 0;
+    if(midX < b.lmax)
+        cmask |= 1;
+    if(midY < b.lmax)
+        cmask |= 4;
+    if(midZ < b.lmax)
+        cmask |= 2;
+
+    char lmask = 0;
+    if(midX < b.umin)
+        lmask |= 1;
+    if(midY < b.umin)
+        lmask |= 4;
+    if(midZ < b.umin)
+        lmask |= 2;
 
     bool intersect = false;
-    bool temp;
-    for(int i = 0; i < numHit; i++)
-    {
-        if(ID[i] == 0)
-            temp = intersectSubTrees(ray, Hit, &current->children[mask], Min, Mid, mask);
-        else if(ID[i] == 7)
-            temp = intersectSubTrees(ray, Hit, &current->children[mask ^ 7], Mid, Max, mask);
-        else
-            temp = intersectSubTrees(ray, Hit, &current->children[mask ^ ID[i]], otherBounds[ID[i] - 1], otherBounds[ID[i] + 5], mask);
+    int i = 0;
+    do{
+        if(current->children[cmask ^ vmask].num > 0){
+            BoundInfo childBound;
+            computeIntersectRange(cmask, childBound, b.Min, Mid, b.Max);
 
-        if(temp){
-            intersect = true;
-            if(i < numHit - 1 && Hit.t < value[i + 1])
-                break;
+            if(childBound.lmax < childBound.umin){
+                if(intersectSubTrees(ray, Hit, &current->children[cmask ^ vmask], childBound, vmask)){
+                    intersect = true;
+                    if(Hit.t < childBound.umin)
+                        break;
+                }
+            }
         }
-    }
+
+        if(cmask == lmask || i > 2)
+            break;
+
+        char old = cmask;
+        do{
+            cmask |= maskList[i];
+            i++;
+        }while(cmask == old && i <= 2);
+    }while(true);
+
     return intersect;
 }
 

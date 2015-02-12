@@ -3,9 +3,10 @@
 
 //#define DEBUG
 
-extern int currentCount;
+extern int currentX;
+extern int currentY;
 
-struct pixel;
-extern pixel* debug;
+class Image;
+extern Image* debug;
 
 #endif // DEBUG_H_INCLUDED
