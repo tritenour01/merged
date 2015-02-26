@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <mutex>
-#include "emitter.h"
+#include "progressEvent.h"
 
 struct Block;
 
@@ -13,14 +13,14 @@ class Progress
 
         Progress(int, int, Block*);
 
-        void setEmitter(Emitter*);
+        void setEventHandler(ProgressEvent*);
 
         void lineComplete(void);
         void blockComplete(void);
 
     private:
 
-        Emitter* emitter;
+        ProgressEvent* handler;
 
         int linesComplete;
         int linesTotal;

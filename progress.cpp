@@ -17,26 +17,26 @@ Progress::Progress(int threads, int blockSetup, Block* blocks)
     blocksComplete = 0;
     blocksTotal = blockSetup * blockSetup;
 
-    emitter = NULL;
+    handler = NULL;
 }
 
-void Progress::setEmitter(Emitter* e)
+void Progress::setEventHandler(ProgressEvent* e)
 {
-    emitter = e;
+    handler = e;
 }
 
 void Progress::lineComplete(void)
 {
     linesComplete++;
-    if(emitter)
-        emitter->lineComplete(linesComplete, linesTotal);
+    if(handler)
+        handler->lineComplete(linesComplete, linesTotal);
 }
 
 void Progress::blockComplete(void)
 {
     completeMutex.lock();
     blocksComplete++;
-    if(emitter)
-        emitter->blockComplete(blocksComplete, blocksTotal);
+    if(handler)
+        handler->blockComplete(blocksComplete, blocksTotal);
     completeMutex.unlock();
 }

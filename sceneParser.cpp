@@ -49,6 +49,17 @@ void SceneParser::parseConfig(void)
             else if(tokenText == "height"){
                 parseNumber(config.height);
             }
+            else if(tokenText == "mode"){
+                parseToken(Scanner::Id);
+                string m = scanner.tokenText();
+
+                if(m == "standard")
+                    config.mode = Config::STANDARD;
+                else if(m == "photon")
+                    config.mode = Config::PHOTON;
+                else
+                    error("invalid mode");
+            }
             else if(tokenText == "ambient"){
                 parseNumber(config.ambient);
             }
@@ -96,6 +107,9 @@ void SceneParser::parseConfig(void)
             }
             else if(tokenText == "camera"){
                 parseCamera();
+            }
+            else if(tokenText == "photon"){
+                parsePhoton();
             }
             else{
                 return;
@@ -358,6 +372,32 @@ void SceneParser::parseCamera(void)
     parseVector(u);
 
     config.camera = new Camera(o, p, u, config.width, config.height);
+
+    parseToken(Scanner::RightCurly);
+}
+
+void SceneParser::parsePhoton(void)
+{
+    parseToken(Scanner::LeftCurly);
+
+    int num;
+    parseNumber(num);
+
+    config.photonCount = num;
+
+    parseNumber(num);
+
+    config.maxPhotonSamples = num;
+
+    float radius;
+    parseNumber(radius);
+
+    config.photonSearchRadius = radius;
+
+    int bounces;
+    parseNumber(bounces);
+
+    config.photonBounces = bounces;
 
     parseToken(Scanner::RightCurly);
 }

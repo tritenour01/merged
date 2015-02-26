@@ -13,6 +13,7 @@ class Log
         static void setLogger(Logger*);
 
         static std::string intToString(int);
+        static std::string floatToString(float);
 
     private:
 

@@ -26,7 +26,7 @@ class Manager
 
         void Render(void);
 
-        void setEmitter(Emitter*);
+        void setEventHandler(ProgressEvent*);
 
     private:
 

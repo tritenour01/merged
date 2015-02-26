@@ -31,7 +31,9 @@ float Light::getIntensity(void)
 float Light::getAttenuation(float dist)
 {
     float poly = falloff.x + falloff.y * dist + falloff.z * dist * dist;
-    return min(1.0f / poly, 1.0f);
+    //return min(1.0f / poly, 1.0f);
+
+    return 1.0f / poly;
 }
 
 PointLight::PointLight(Raytracer* r, Vector3 p, Vector3 c, Vector3 f, float i)
@@ -54,6 +56,20 @@ Vector3 PointLight::illuminate(Ray& ray, Vector3& n, Vector3& diffuse)
     }
 
     return Vector3(0, 0, 0);
+}
+
+void PointLight::emitPhotons(PhotonMap& photonMap, int num, int maxBounces)
+{
+    PhotonTracer tracer(raytracer, photonMap, maxBounces);
+    for(int i = 0; i < num; i++){
+        Vector3 dir;
+        for(int i = 0; i < 3; i++)
+            dir.elements[i] = (float)((rand() % 1001) - 500) / 500.0f;
+        dir.normalize();
+        Vector3 power = lightColor * (1.0f / (float)num);
+        Photon photon(position, dir, power);
+        tracer.tracePhoton(photon);
+    }
 }
 
 DirectionalLight::DirectionalLight(Raytracer* r, Vector3 d, Vector3 c, float i)

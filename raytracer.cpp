@@ -4,6 +4,7 @@
 Raytracer::Raytracer(void)
 {
     //set the default
+    config.mode = Config::STANDARD;
     config.width = 100;
     config.height = 100;
     config.camera = NULL;
@@ -13,11 +14,16 @@ Raytracer::Raytracer(void)
     config.glossyReflectSampling = 1;
     config.glossyRefractSampling = 1;
     config.recursionThreshold = 1.0f / 256.0f;
+    config.photonCount = 0;
+
     config.sampler = NULL;
 
     parser = new Parser(this);
 
-    srand(time(NULL));
+    photonMap = NULL;
+
+    //srand(time(NULL));
+    srand(0);
 }
 
 Raytracer::~Raytracer(void)
@@ -44,7 +50,20 @@ bool Raytracer::loadScene(string fileName)
     if(config.camera == NULL)
         config.camera = new Camera(Vector3(0, 0, 0), Vector3(0, 0, 1), Vector3(0, 1, 0), config.width, config.height);
 
+    if(config.mode == Config::PHOTON)
+        setupPhotonMap();
+
     return result;
+}
+
+void Raytracer::setupPhotonMap(void)
+{
+    photonMap = new PhotonMap();
+
+    for(int i = 0; i < lights.size(); i++)
+        lights[i]->emitPhotons(*photonMap, config.photonCount, config.photonBounces);
+
+    photonMap->setup();
 }
 
 //return the image width
@@ -183,14 +202,14 @@ Vector3 Raytracer::computeColor(Ray& ray, int depth, float factor)
             refraction = calculateRefraction(ray, n, depth, factor);
     }
 
-    Vector3 amb = /*calculateAO(ray, 100) * */config.ambient * ray.s->getMaterial().getDiffuse(ray);
-
     //final color
-    return amb + calculateLight(ray, n) + reflection + refraction;
+    if(config.mode == Config::STANDARD)
+        return calculateLightStandard(ray, n) + reflection + refraction;
+    return calculateLightPhoton(ray, n) + reflection + refraction;
 }
 
 //computes the light calculations
-Vector3 Raytracer::calculateLight(Ray& ray, Vector3& n)
+Vector3 Raytracer::calculateLightStandard(Ray& ray, Vector3& n)
 {
     Vector3 diffuse = ray.s->getMaterial().getDiffuse(ray);
 
@@ -204,7 +223,45 @@ Vector3 Raytracer::calculateLight(Ray& ray, Vector3& n)
         totalColor += current->illuminate(ray, n, diffuse);
     }
 
-    return totalColor;
+    Vector3 amb = /*calculateAO(ray, 100) * */config.ambient * diffuse;
+
+    return amb + totalColor;
+}
+
+Vector3 Raytracer::calculateLightPhoton(Ray& ray, Vector3& n)
+{
+    Vector3 diffuse = ray.s->getMaterial().getDiffuse(ray);
+    Vector3 amb = /*calculateAO(ray, 100) * */config.ambient * diffuse;
+
+    Vector3 color(0, 0, 0);
+
+    std::vector<Photon*> photons;
+    photonMap->nearestN(ray.point, photons, config.maxPhotonSamples, config.photonSearchRadius);
+
+    if(photons.size() == 0)
+        return amb;
+
+    float r = 0.0f;
+    for(int i = 0; i < photons.size(); i++){
+        Vector3 dir = ray.point - photons[i]->pos;
+        float len = dir.getSqrLength();
+        if(len > r)
+            r = len;
+    }
+
+    for(int i = 0; i < photons.size(); i++){
+        Vector3 l = -photons[i]->direction;
+        l.normalize();
+        Vector3 factor = diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
+        Vector3 power = photons[i]->power;
+        factor.x *= power.x;
+        factor.y *= power.y;
+        factor.z *= power.z;
+        color += factor;
+    }
+
+    float density = (4.0f * 3.141592653f * r * r);
+    return amb + (color * (1.0f / density));
 }
 
 Vector3 Raytracer::calculateShading(Ray& ray, Vector3& n, Vector3& l, Vector3& diffuse)
@@ -213,7 +270,7 @@ Vector3 Raytracer::calculateShading(Ray& ray, Vector3& n, Vector3& l, Vector3& d
     if(ray.s->getMaterial().getDiffuseFactor() > 0.0){
         //diffuse term
         //color += diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
-        float roughness = 0.5f;
+        float roughness = 0.0f;
         float rSqrd = roughness * roughness;
         float A = 1.0f - 0.5f * (rSqrd / (rSqrd + 0.33f));
         float B = 0.45f * (rSqrd / (rSqrd + 0.09f));
@@ -290,27 +347,11 @@ Vector3 Raytracer::calculateReflection(Ray& ray, Vector3& n, int depth, float fa
     return c;
 }
 
-bool Raytracer::refractRay(Vector3& n, Vector3& v, Vector3& r, float IOR)
+bool Raytracer::refractVector(Vector3& normal, Vector3& view, Vector3& result, float IOR)
 {
-
-}
-
-//compute the refraction color
-Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, float factor)
-{
-    //view direction
-    Vector3 view = ray.dir;
-    view.normalize();
-
-    float cos1;
-    float cos2;
-    float n = 1.0f;
-    float nt = ray.s->getMaterial().getIOR();
-
-    Vector3 result;
-
-
     bool TIR = false;
+    float n = 1.0f;
+    float nt = IOR;
 
     //entering the object
     if(Vector3::DotProduct(view, normal) < 0){
@@ -323,9 +364,6 @@ Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, flo
         cs2 = 1.0f - compN * compN * (1.0f - c1 * c1);
         result = compN * view + (compN * c1 - sqrt(cs2)) *  normal;
         result.normalize();
-
-        cos1 = c1;
-        cos2 = -Vector3::DotProduct(normal, result);
     }
     //exiting the glass
     else{
@@ -343,10 +381,35 @@ Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, flo
             //compute the refracted direction
             result = compN * view - (compN * c1 - sqrt(cs2)) *  normal;
             result.normalize();
-
-            cos1 = c1;
-            cos2 = Vector3::DotProduct(normal, result);
         }
+    }
+    return TIR;
+
+}
+
+//compute the refraction color
+Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, float factor)
+{
+    //view direction
+    Vector3 view = ray.dir;
+    view.normalize();
+
+    float cos1;
+    float cos2;
+    float n = 1.0f;
+    float nt = ray.s->getMaterial().getIOR();
+
+    Vector3 result;
+    //bool TIR = refractVector(normal, view, result, nt);
+    bool TIR = refractVector(normal, view, result, nt);
+
+    if(Vector3::DotProduct(view, normal) < 0){
+        cos1 = -Vector3::DotProduct(view, normal);
+        cos2 = -Vector3::DotProduct(normal, result);
+    }
+    else{
+        cos1 = Vector3::DotProduct(view, normal);
+        cos2 = Vector3::DotProduct(normal, result);
     }
 
     //reflection vector
@@ -377,11 +440,6 @@ Vector3 Raytracer::calculateRefraction(Ray& ray, Vector3& normal, int depth, flo
     if(!intersectRay(refract))
         return config.backColor;
     Vector3 color = (1.0f - reflectComp) * ray.s->getMaterial().getRefraction() * computeColor(refract, depth + 1, factor  * (1.0f - reflectComp));
-    //if(Vector3::DotProduct(view, normal) >= 0){
-        //color.x *= 0.9f;
-        //color.y *= 0.9f;
-        //color.z *= 0.9f;
-    //}
     return color + reflectComp * c;
 }
 
@@ -513,63 +571,36 @@ Vector3 Raytracer::calculateGlossyReflection(Ray& ray, Vector3& n, int depth, fl
     return color * ray.s->getMaterial().getReflective() * (1.0f / ((float)config.glossyReflectSampling * (float)config.glossyReflectSampling));
 }
 
-Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, float factor)
+Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& normal, int depth, float factor)
 {
     //view direction
     Vector3 view = ray.dir;
     view.normalize();
 
-    //float cos1;
-    //float cos2;
-    float ns = 1.0f;
+    float cos1;
+    float cos2;
+    float n = 1.0f;
     float nt = 1.5f;
 
     Vector3 result;
+    bool TIR = refractVector(normal, view, result, nt);
 
-    bool TIR = false;
-
-    //entering the object
-    if(Vector3::DotProduct(view, n) < 0){
-        //refraction index
-        float compN = ns / nt;
-
-        //compute the resultant direction
-        float sqrtComponent = sqrt(1 - (compN * compN * (1 - pow(Vector3::DotProduct(-view, n), 2.0f))));
-        Vector3 other = compN * (-view - n * Vector3::DotProduct(-view, n));
-        result = other - n * sqrtComponent;
-        result.normalize();
-
-        //cos1 = -Vector3::DotProduct(view, normal);
-        //cos2 = -Vector3::DotProduct(normal, result);
+    if(Vector3::DotProduct(view, normal) < 0){
+        cos1 = -Vector3::DotProduct(view, normal);
+        cos2 = -Vector3::DotProduct(normal, result);
     }
-    //exiting the glass
     else{
-        //refraction index
-        float compN = nt / ns;
-
-        float sinSqrd = compN * compN * (1.0f - Vector3::DotProduct(view, n) * Vector3::DotProduct(view, n));
-        if(sinSqrd > 1.0f)
-            TIR = true;
-
-        if(!TIR){
-            //compute the resultant direction
-            float sqrtComponent = sqrt(1 - (compN * compN * (1 - pow(Vector3::DotProduct(-view, -n), 2.0f))));
-            Vector3 other = compN * (-view + n * Vector3::DotProduct(-view, -n));
-            result = other + n * sqrtComponent;
-            result.normalize();
-
-            //cos1 = Vector3::DotProduct(view, normal);
-            //cos2 = Vector3::DotProduct(normal, result);
-        }
+        cos1 = Vector3::DotProduct(view, normal);
+        cos2 = Vector3::DotProduct(normal, result);
     }
 
     //reflection vector
-    Vector3 refl = (2.0f * Vector3::DotProduct(n, -view) * n) + view;
+    Vector3 refl = (2.0f * Vector3::DotProduct(normal, -view) * normal) + view;
 
-    //float parallel = (nt * cos1 - n * cos2) / (nt * cos1 + n * cos2);
-    //float perp = (n * cos1 - nt * cos2) / (n * cos1 + nt * cos2);
+    float parallel = (nt * cos1 - n * cos2) / (nt * cos1 + n * cos2);
+    float perp = (n * cos1 - nt * cos2) / (n * cos1 + nt * cos2);
 
-    //float reflectComp = 0.5f * (parallel * parallel + perp * perp);
+    float reflectComp = 0.5f * (parallel * parallel + perp * perp);
 
     //compute the reflection color
     Ray reflect = Ray(ray.point, refl);
@@ -577,21 +608,14 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
     if(intersectRay(reflect)){
         if(TIR)
             c = computeColor(reflect, depth + 1, factor);
-    //    else
-    //        c = computeColor(reflect, depth + 1, factor * reflectComp);
+        else
+            c = computeColor(reflect, depth + 1, factor * reflectComp);
     }
     else
-        c = Vector3(0, 0, 0);
+        c = config.backColor;
 
     if(TIR)
         return c;
-
-    //compute the refraction color
-    //Ray refract(ray.point, result);
-    //if(!intersectRay(refract))
-    //    return Vector3(0, 0, 0);
-    //return ray.s->getMaterial().getRefraction() * computeColor(refract, depth + 1, factor);
-    //return (1.0f - reflectComp) * ray.s->getMaterial().getRefraction() * computeColor(refract, depth + 1, factor * (1.0f - reflectComp)) + reflectComp * c;
 
     Vector3 tangent;
     if(fabs(result.x) >= Ray::SMALL || fabs(result.z) >= Ray::SMALL)
@@ -610,7 +634,6 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
     float Yoffset = 1.0f / (float)config.glossyReflectSampling;
 
     float angle = 80.0f * ray.s->getMaterial().getGlossiness();
-    //float angle = 20.0f;
     float diskSize = tanf(angle * 3.1415938f / 360.0f);
 
     Vector3 color(0, 0, 0);
@@ -623,7 +646,7 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
 
             Vector3 d = result + (u * diskSize * cosf(theta + currentX) * tangent) + (u * diskSize * sinf(theta + currentX) * bitangent);
 
-            if(Vector3::DotProduct(d, n) > 0){
+            if(Vector3::DotProduct(d, normal) > 0){
                 Ray test(ray.point, d);
                 if(intersectRay(test)){
                     color += computeColor(test, depth + 1, factor * ray.s->getMaterial().getRefraction() / (float)config.glossyRefractSampling);
@@ -647,5 +670,5 @@ Vector3 Raytracer::calculateGlossyRefraction(Ray& ray, Vector3& n, int depth, fl
         currentY += Yoffset;
     }
 
-    return color * ray.s->getMaterial().getRefraction() * (1.0f / ((float)config.glossyRefractSampling * (float)config.glossyRefractSampling));
+    return reflectComp * c + color * (1.0f - reflectComp) * ray.s->getMaterial().getRefraction() * (1.0f / ((float)config.glossyRefractSampling * (float)config.glossyRefractSampling));
 }

@@ -44,6 +44,7 @@ class SceneParser
         void parseTriangle(void);
 
         void parseCamera(void);
+        void parsePhoton(void);
 
         void parsePointLight(void);
         void parseDirectionalLight(void);

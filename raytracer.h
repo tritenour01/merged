@@ -16,8 +16,13 @@
 
 #include "image.h"
 
+#include "photonMap.h"
+
 struct Config
 {
+    enum Mode {STANDARD, PHOTON};
+    Mode mode;
+
     int width;
     int height;
     float ambient;
@@ -26,6 +31,11 @@ struct Config
     float recursionThreshold;
     int glossyReflectSampling;
     int glossyRefractSampling;
+
+    int photonCount;
+    int maxPhotonSamples;
+    float photonSearchRadius;
+    int photonBounces;
 
     Camera* camera;
     Sampler* sampler;
@@ -64,12 +74,15 @@ class Raytracer
 
     private:
 
+        void setupPhotonMap(void);
+
         Vector3 computeColor(Ray&, int, float);
-        Vector3 calculateLight(Ray&, Vector3&);
+        Vector3 calculateLightStandard(Ray&, Vector3&);
+        Vector3 calculateLightPhoton(Ray&, Vector3&);
         Vector3 calculateReflection(Ray&, Vector3&, int, float);
         Vector3 calculateGlossyReflection(Ray&, Vector3&, int, float);
         Vector3 calculateRefraction(Ray&, Vector3&, int, float);
-        bool refractRay(Vector3&, Vector3&, Vector3&, float);
+        bool refractVector(Vector3&, Vector3&, Vector3&, float);
         Vector3 calculateGlossyRefraction(Ray&, Vector3&, int, float);
         float calculateAO(Ray&, int);
 
@@ -78,6 +91,7 @@ class Raytracer
 
         Config config;
         Parser* parser;
+        PhotonMap* photonMap;
 };
 
 #endif // RAYTRACER_H_INCLUDED

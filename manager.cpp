@@ -112,7 +112,7 @@ int Manager::nextBlock(void)
     return value;
 }
 
-void Manager::setEmitter(Emitter* e)
+void Manager::setEventHandler(ProgressEvent* e)
 {
-    progress->setEmitter(e);
+    progress->setEventHandler(e);
 }

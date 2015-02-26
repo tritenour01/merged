@@ -2,6 +2,8 @@
 #define LIGHT_H_INCLUDED
 
 #include "vector.h"
+#include "photonMap.h"
+#include "photonTracer.h"
 
 class Raytracer;
 struct Ray;
@@ -19,6 +21,7 @@ class Light
         float getAttenuation(float);
 
         virtual Vector3 illuminate(Ray&, Vector3&, Vector3&) =0;
+        virtual void emitPhotons(PhotonMap&, int, int){};
 
     protected:
 
@@ -37,6 +40,8 @@ class PointLight : public Light
         PointLight(Raytracer*, Vector3, Vector3, Vector3, float);
 
         Vector3 illuminate(Ray&, Vector3&, Vector3&);
+
+        void emitPhotons(PhotonMap&, int, int);
 };
 
 class DirectionalLight : public Light

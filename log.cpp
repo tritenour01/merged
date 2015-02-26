@@ -26,3 +26,10 @@ std::string Log::intToString(int value)
     ss<<value;
     return ss.str();
 }
+
+std::string Log::floatToString(float value)
+{
+    std::stringstream ss;
+    ss<<value;
+    return ss.str();
+}
