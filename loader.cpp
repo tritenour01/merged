@@ -44,6 +44,20 @@ void Loader::parseConfig(void)
             else if(tokenText == "height"){
                 parseNumber(data->scene.imageSize[1]);
             }
+            else if(tokenText == "mode"){
+                parseToken(Scanner::Id);
+                string m = scanner.tokenText();
+
+                if(m == "standard")
+                    data->scene.mode = "standard";
+                else if(m == "photon")
+                    data->scene.mode = "photon";
+                else
+                    error("invalid mode");
+            }
+            else if(tokenText == "gamma"){
+                parseNumber(data->scene.gamma);
+            }
             else if(tokenText == "ambient"){
                 parseNumber(data->scene.ambient);
             }
@@ -95,6 +109,9 @@ void Loader::parseConfig(void)
             }
             else if(tokenText == "camera"){
                 parseCamera();
+            }
+            else if(tokenText == "photon"){
+                parsePhoton();
             }
             else{
                 return;
@@ -169,6 +186,22 @@ void Loader::parseCamera(void)
     parseVector(data->camera.lookat);
 
     parseVector(data->camera.up);
+
+    parseToken(Scanner::RightCurly);
+}
+
+void Loader::parsePhoton(void)
+{
+    parseToken(Scanner::LeftCurly);
+
+    parseNumber(data->scene.photon.photonCount);
+
+    parseNumber(data->scene.photon.maxSamples);
+
+    parseNumber(data->scene.photon.maxRadius);
+
+    parseNumber(data->scene.photon.bounces);
+
 
     parseToken(Scanner::RightCurly);
 }

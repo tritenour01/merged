@@ -23,6 +23,7 @@ class Loader
         void parseNumber(int&);
 
         void parseCamera(void);
+        void parsePhoton(void);
 
         void advance(void);
         void acceptToken(Scanner::tokenType);

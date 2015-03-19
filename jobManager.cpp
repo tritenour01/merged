@@ -54,7 +54,7 @@ void JobManager::runJob(void)
 
     currentJob = job;
     currentJob->Render();
-    runner->runRenderer(currentJob->getData(), currentJob->getEmitter());
+    runner->runRenderer(currentJob->getData(), currentJob->getHandler());
 }
 
 void JobManager::jobDone(void)

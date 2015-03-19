@@ -4,7 +4,7 @@
 #include <QString>
 #include <QImage>
 #include <previewWindow.h>
-#include <UIemitter.h>
+#include <UIprogressEvent.h>
 
 class RenderJob : public QObject
 {
@@ -21,7 +21,7 @@ class RenderJob : public QObject
         int getNum(void);
         RenderJob::STATUS getStatus(void);
         int getProgress(void);
-        UIemitter* getEmitter(void);
+        UIprogressEvent* getHandler(void);
         std::string getData(void);
 
         void Render(void);
@@ -49,7 +49,7 @@ class RenderJob : public QObject
         QString jobName;
         int nameNum;
         STATUS status;
-        UIemitter* emitter;
+        UIprogressEvent* handler;
         int progress;
         //render time
         UIimage* image;

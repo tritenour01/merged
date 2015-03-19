@@ -7,12 +7,12 @@ RenderJob::RenderJob(QString name, std::string data, int num, int id)
     nameNum = num;
     status = Waiting;
     progress = 0;
-    emitter = new UIemitter();
+    handler = new UIprogressEvent();
     image = NULL;
     preview = NULL;
     jobData = data;
 
-    connect(emitter, SIGNAL(updateProgress(int)), this, SLOT(updateProgress(int)));
+    connect(handler, SIGNAL(updateProgress(int)), this, SLOT(updateProgress(int)));
 }
 
 int RenderJob::getID(void)
@@ -40,9 +40,9 @@ int RenderJob::getProgress(void)
     return progress;
 }
 
-UIemitter* RenderJob::getEmitter(void)
+UIprogressEvent* RenderJob::getHandler(void)
 {
-    return emitter;
+    return handler;
 }
 
 std::string RenderJob::getData(void)

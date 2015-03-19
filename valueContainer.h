@@ -41,6 +41,43 @@ class antiContainer : public QGroupBox
         void changeType(int);
 };
 
+class renderModeContainer : public QGroupBox
+{
+    Q_OBJECT
+
+    public:
+
+        renderModeContainer(fileManager*);
+
+        void readOnly(bool);
+
+        void write(sceneData*);
+        void read(sceneData*);
+
+    private slots:
+        void changed(int);
+
+    private:
+
+        fileManager* manager;
+
+        QFormLayout* modeLayout;
+        QComboBox* mode;
+
+        //Direct mode
+        QLabel* directLabel;
+        QDoubleSpinBox* ambient;
+
+        //Photon mode
+        QLabel* photonLabels[4];
+        QSpinBox* photonCount;
+        QSpinBox* samples;
+        QDoubleSpinBox* radius;
+        QSpinBox* bounces;
+
+        void changeMode(int);
+};
+
 class valueContainer : public QGroupBox
 {
     Q_OBJECT

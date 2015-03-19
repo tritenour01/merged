@@ -22,15 +22,18 @@ PropertiesWidget::PropertiesWidget(fileManager* m)
     imageSize->range(1, 10000);
     layout->addWidget(imageSize);
 
-    QString ambientField[1] = "Factor";
-    ambient = new valueContainer(manager, AMBIENT, "Ambient", 1, ambientField, valueContainer::TYPE_FLOAT);
-    ambient->range(0, 1);
-    layout->addWidget(ambient);
+    QString gammaField[1] = "Factor";
+    gamma = new valueContainer(manager, GAMMA, "Gamma", 1, gammaField, valueContainer::TYPE_FLOAT);
+    gamma->range(0, 5);
+    layout->addWidget(gamma);
 
     QString backgroundFields[3] = {"R", "G", "B"};
     background = new valueContainer(manager, BACKGROUND, "Background Color", 3, backgroundFields, valueContainer::TYPE_FLOAT);
     background->range(0, 1);
     layout->addWidget(background);
+
+    mode = new renderModeContainer(manager);
+    layout->addWidget(mode);
 
     QString recursionFields[3] = {"Depth", "Glossy Refl", "Glossy Refr"};
     recursion = new valueContainer(manager, RECURSIVE, "Recursion Settings", 3, recursionFields, valueContainer::TYPE_INT);
@@ -74,10 +77,11 @@ PropertiesWidget::PropertiesWidget(fileManager* m)
 void PropertiesWidget::readOnly(bool b)
 {
     imageSize->readOnly(b);
-    ambient->readOnly(b);
+    gamma->readOnly(b);
     background->readOnly(b);
     recursion->readOnly(b);
     antialiasing->readOnly(b);
+    mode->readOnly(b);
     pos->readOnly(b);
     look->readOnly(b);
     up->readOnly(b);
@@ -89,10 +93,11 @@ void PropertiesWidget::read(void)
     manager->read(fileManager::SCENE, &scene);
 
     imageSize->read(&scene);
-    ambient->read(&scene);
+    gamma->read(&scene);
     background->read(&scene);
     recursion->read(&scene);
     antialiasing->read(&scene);
+    mode->read(&scene);
 
     cameraData camera;
     manager->read(fileManager::CAMERA, &camera);
@@ -105,11 +110,12 @@ void PropertiesWidget::read(void)
 void PropertiesWidget::write(void)
 {
     sceneData scene;
+    gamma->write(&scene);
     imageSize->write(&scene);
-    ambient->write(&scene);
     background->write(&scene);
     recursion->write(&scene);
     antialiasing->write(&scene);
+    mode->write(&scene);
 
     manager->write(fileManager::SCENE, &scene);
 

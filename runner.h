@@ -10,10 +10,10 @@
 #include <QImage>
 #include <UIimage.h>
 #include <manager.h>
-#include <UIemitter.h>
+#include <UIprogressEvent.h>
 
 #include <raytracer.h>
-#include <UIemitter.h>
+#include <UIprogressEvent.h>
 
 class JobManager;
 
@@ -25,7 +25,7 @@ class Worker : public QObject
 
     public:
 
-        Worker(string, int, int, UIemitter*);
+        Worker(string, int, int, UIprogressEvent*);
         ~Worker();
 
     public slots:
@@ -42,7 +42,7 @@ class Worker : public QObject
 
         QImage* image;
         UIimage* img;
-        UIemitter* emitter;
+        UIprogressEvent* handler;
 
         string filePath;
         int threads;
@@ -56,7 +56,7 @@ class Runner : public QObject
     public:
 
         Runner(void);
-        void runRenderer(string, UIemitter*);
+        void runRenderer(string, UIprogressEvent*);
 
         void setThreads(int);
         void setBlocks(int);
@@ -77,7 +77,7 @@ class Runner : public QObject
 
     private:
 
-        UIemitter* emitter;
+        UIprogressEvent* handler;
         JobManager* manager;
 
         int threads;

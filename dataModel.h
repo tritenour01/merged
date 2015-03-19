@@ -39,16 +39,49 @@ typedef struct antiData
 
 }antiData;
 
+typedef struct photonData
+{
+    int photonCount;
+    int maxSamples;
+    float maxRadius;
+    int bounces;
+
+    photonData()
+    {
+        photonCount = 200000;
+        maxSamples = 50;
+        maxRadius = 0.1f;
+        bounces = 4;
+    }
+
+    QString toString(void)
+    {
+        return QString("photon{\n"
+                       "    %1\n"
+                       "    %2\n"
+                       "    %3\n"
+                       "    %4\n"
+                       "}\n").arg(QString::number(photonCount),
+                                  QString::number(maxSamples),
+                                  QString::number(maxRadius),
+                                  QString::number(bounces));
+    }
+}photonData;
+
 typedef struct sceneData
 {
+    QString mode;
     int imageSize[2];
+    float gamma;
     float ambient;
     float backgroundColor[3];
     int recursive[3];
     antiData antialiasing;
+    photonData photon;
 
     sceneData()
     {
+        mode = "standard";
         imageSize[0] = 500;
         imageSize[1] = 500;
 
@@ -65,19 +98,26 @@ typedef struct sceneData
 
     QString toString(void)
     {
-        return "width " + QString::number(imageSize[0]) + "\n" +
-               "height " + QString::number(imageSize[1]) + "\n" +
-               "ambient " + QString::number(ambient) + "\n" +
+        QString s = QString("mode " + mode + "\n" +
+                    "width " + QString::number(imageSize[0]) + "\n" +
+                    "height " + QString::number(imageSize[1]) + "\n" +
+                    "gamma " + QString::number(gamma) + "\n" +
 
-               "background <" + QString::number(backgroundColor[0]) + ", " +
-                                QString::number(backgroundColor[1]) + ", " +
-                                QString::number(backgroundColor[2]) + ">\n" +
+                    "background <" + QString::number(backgroundColor[0]) + ", " +
+                                     QString::number(backgroundColor[1]) + ", " +
+                                     QString::number(backgroundColor[2]) + ">\n" +
 
-                "depth " + QString::number(recursive[0]) + "\n" +
-                "glossyReflectSampling " + QString::number(recursive[1]) + "\n" +
-                "glossyRefractSampling " + QString::number(recursive[2]) + "\n" +
+                    "depth " + QString::number(recursive[0]) + "\n" +
+                    "glossyReflectSampling " + QString::number(recursive[1]) + "\n" +
+                    "glossyRefractSampling " + QString::number(recursive[2]) + "\n" +
 
-                antialiasing.toString();
+                    antialiasing.toString());
+
+        if(mode == "standard")
+            s += "ambient " + QString::number(ambient) + "\n";
+        else
+            s +=photon.toString();
+        return s;
     }
 }sceneData;
 

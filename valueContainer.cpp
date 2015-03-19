@@ -96,6 +96,9 @@ void valueContainer::write(void* data)
         case PropertiesWidget::IMAGESIZE:
             getData((void*)((sceneData*)data)->imageSize);
             break;
+        case PropertiesWidget::GAMMA:
+            getData((void*)&((sceneData*)data)->gamma);
+            break;
         case PropertiesWidget::AMBIENT:
             getData((void*)&((sceneData*)data)->ambient);
             break;
@@ -148,6 +151,9 @@ void valueContainer::read(void* data)
     {
         case PropertiesWidget::IMAGESIZE:
             setData((void*)((sceneData*)data)->imageSize);
+            break;
+        case PropertiesWidget::GAMMA:
+            setData((void*)&((sceneData*)data)->gamma);
             break;
         case PropertiesWidget::AMBIENT:
             setData((void*)&((sceneData*)data)->ambient);
@@ -271,4 +277,110 @@ void antiContainer::read(sceneData* scene)
 
     sampling->setValue(scene->antialiasing.sampling);
     threshold->setValue(scene->antialiasing.threshold);
+}
+
+renderModeContainer::renderModeContainer(fileManager* m) :
+    QGroupBox("Render Mode")
+{
+    manager = m;
+    modeLayout = new QFormLayout;
+
+    mode = new QComboBox();
+    mode->addItem("Direct Lighting");
+    mode->addItem("Photon Mapping");
+    connect(mode, SIGNAL(currentIndexChanged(int)), this, SLOT(changed(int)));
+    connect(mode, SIGNAL(currentIndexChanged(int)), window::getInstance(), SLOT(fileEdited()));
+
+    modeLayout->addRow(mode);
+
+    directLabel = new QLabel("Ambient");
+    ambient = new QDoubleSpinBox();
+    ambient->setRange(0, 1);
+    connect(ambient, SIGNAL(valueChanged(double)), window::getInstance(), SLOT(fileEdited()));
+
+    photonLabels[0] = new QLabel("Count");
+    photonCount = new QSpinBox();
+    photonCount->setMaximum(INT_MAX);
+    connect(photonCount, SIGNAL(valueChanged(int)), window::getInstance(), SLOT(fileEdited()));
+
+    photonLabels[1] = new QLabel("Samples");
+    samples = new QSpinBox();
+    samples->setMaximum(INT_MAX);
+    connect(samples, SIGNAL(valueChanged(int)), window::getInstance(), SLOT(fileEdited()));
+
+    photonLabels[2] = new QLabel("Radius");
+    radius = new QDoubleSpinBox();
+    connect(radius, SIGNAL(valueChanged(double)), window::getInstance(), SLOT(fileEdited()));
+
+    photonLabels[3] = new QLabel("Bounces");
+    bounces = new QSpinBox();
+    connect(bounces, SIGNAL(valueChanged(int)), window::getInstance(), SLOT(fileEdited()));
+
+    setLayout(modeLayout);
+
+    changeMode(0);
+}
+
+void renderModeContainer::readOnly(bool b)
+{
+
+}
+
+void renderModeContainer::write(sceneData* scene)
+{
+    switch(mode->currentIndex())
+    {
+        case 0:
+            scene->mode = "standard";
+            scene->ambient = ambient->value();
+            break;
+        case 1:
+            scene->mode = "photon";
+            scene->photon.photonCount = photonCount->value();
+            scene->photon.maxSamples = samples->value();
+            scene->photon.maxRadius = radius->value();
+            scene->photon.bounces = bounces->value();
+            break;
+    }
+}
+
+void renderModeContainer::read(sceneData* scene)
+{
+    QString m = scene->mode;
+    if(m == "standard"){
+        mode->setCurrentIndex(0);
+        ambient->setValue(scene->ambient);
+    }
+    else{
+        mode->setCurrentIndex(1);
+        photonCount->setValue(scene->photon.photonCount);
+        samples->setValue(scene->photon.maxSamples);
+        radius->setValue(scene->photon.maxRadius);
+        bounces->setValue(scene->photon.bounces);
+    }
+}
+
+void renderModeContainer::changed(int id)
+{
+    changeMode(id);
+}
+
+void renderModeContainer::changeMode(int id)
+{
+    QLayoutItem* item;
+    while((item = modeLayout->takeAt(1))){
+        item->widget()->setParent(NULL);
+        delete item;
+    }
+    switch(id){
+        case 0:
+            modeLayout->addRow(directLabel, ambient);
+            break;
+        case 1:
+            modeLayout->addRow(photonLabels[0], photonCount);
+            modeLayout->addRow(photonLabels[1], samples);
+            modeLayout->addRow(photonLabels[2], radius);
+            modeLayout->addRow(photonLabels[3], bounces);
+            break;
+    }
 }

@@ -2,10 +2,10 @@
 #include <mainwindow.h>
 #include <QDebug>
 
-Worker::Worker(string path, int t, int b, UIemitter* e)
+Worker::Worker(string path, int t, int b, UIprogressEvent* e)
 {
     image = NULL;
-    emitter = e;
+    handler = e;
 
     filePath = path;
     threads = t;
@@ -31,7 +31,7 @@ void Worker::Render(void)
     emit imageReady(img);
 
     Manager manager(threads, blocks, img, &R);
-    manager.setEmitter(emitter);
+    manager.setEventHandler(handler);
     manager.Render();
 
     image->save("image.png", "PNG");
@@ -41,13 +41,13 @@ void Worker::Render(void)
 
 Runner::Runner(void)
 {
-    emitter = NULL;
+    handler = NULL;
 
     threads = 1;
     blocks = 1;
 }
 
-void Runner::runRenderer(string sceneData, UIemitter* e)
+void Runner::runRenderer(string sceneData, UIprogressEvent* e)
 {
     QString cd = QDir::currentPath();
     string path = cd.toLocal8Bit().constData();
@@ -55,11 +55,10 @@ void Runner::runRenderer(string sceneData, UIemitter* e)
     ofstream file(path.c_str());
     file<<sceneData;
 
-    emitter = e;
+    handler = e;
+    handler->lineComplete(0, 1);
 
-    emitter->lineComplete(0, 1);
-
-    Worker* work = new Worker(path, threads, blocks, emitter);
+    Worker* work = new Worker(path, threads, blocks, handler);
     QThread* thread = new QThread();
     work->moveToThread(thread);
 

@@ -7,6 +7,7 @@
 
 class valueContainer;
 class antiContainer;
+class renderModeContainer;
 
 class Header : public QWidget
 {
@@ -19,8 +20,8 @@ class PropertiesWidget : public QWidget
     public:
         PropertiesWidget(fileManager*);
 
-        enum PROPERTIES {IMAGESIZE, AMBIENT, BACKGROUND, RECURSIVE,
-                         ANTIALIASING, POSITION, LOOKAT, UP};
+        enum PROPERTIES {IMAGESIZE, GAMMA, AMBIENT, BACKGROUND,
+                         RECURSIVE, ANTIALIASING, POSITION, LOOKAT, UP};
 
         void readOnly(bool);
 
@@ -34,10 +35,11 @@ class PropertiesWidget : public QWidget
         QScrollArea* area;
 
         valueContainer* imageSize;
-        valueContainer* ambient;
+        valueContainer* gamma;
         valueContainer* background;
         valueContainer* recursion;
         antiContainer* antialiasing;
+        renderModeContainer* mode;
         valueContainer* pos;
         valueContainer* look;
         valueContainer* up;

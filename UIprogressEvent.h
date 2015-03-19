@@ -1,10 +1,10 @@
-#ifndef UIEMITTER_H_INCLUDED
-#define UIEMITTER_H_INCLUDED
+#ifndef UIPROGRESS_EVENT_H_INCLUDED
+#define UIPROGRESS_EVENT_H_INCLUDED
 
 #include <QObject>
-#include <emitter.h>
+#include <progressEvent.h>
 
-class UIemitter : public QObject, public Emitter
+class UIprogressEvent : public QObject, public ProgressEvent
 {
     Q_OBJECT
 
@@ -21,4 +21,4 @@ class UIemitter : public QObject, public Emitter
         void updateProgress(int);
 };
 
-#endif // UIEMITTER_H_INCLUDED
+#endif // UIPROGRESS_EVENT_H_INCLUDED
