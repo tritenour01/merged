@@ -37,6 +37,8 @@ struct Config
     float photonSearchRadius;
     int photonBounces;
 
+    float gamma;
+
     Camera* camera;
     Sampler* sampler;
 };
@@ -85,6 +87,8 @@ class Raytracer
         bool refractVector(Vector3&, Vector3&, Vector3&, float);
         Vector3 calculateGlossyRefraction(Ray&, Vector3&, int, float);
         float calculateAO(Ray&, int);
+
+        void gammaCorrection(Vector3&);
 
         vector<Shape*> objects;
         vector<Light*> lights;

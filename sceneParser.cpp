@@ -60,6 +60,12 @@ void SceneParser::parseConfig(void)
                 else
                     error("invalid mode");
             }
+            else if(tokenText == "gamma"){
+                float num;
+                parseNumber(num);
+
+                config.gamma = num;
+            }
             else if(tokenText == "ambient"){
                 parseNumber(config.ambient);
             }
@@ -506,7 +512,7 @@ void SceneParser::parseAreaLight(void)
     raytracer->addLight(l);
 
     Plane* p = new Plane(pos + up * 0.5f + right * 0.5f, right, right.getLength() / 2.0f, up, up.getLength() / 2.0f);
-    p->getMaterial().setEmissive(color);
+    p->getMaterial().setEmissive(color * intensity);
     raytracer->addObject(p);
 
     parseToken(Scanner::RightCurly);

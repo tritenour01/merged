@@ -16,6 +16,8 @@ Raytracer::Raytracer(void)
     config.recursionThreshold = 1.0f / 256.0f;
     config.photonCount = 0;
 
+    config.gamma = 1.0f;
+
     config.sampler = NULL;
 
     parser = new Parser(this);
@@ -60,8 +62,14 @@ void Raytracer::setupPhotonMap(void)
 {
     photonMap = new PhotonMap();
 
+    float totalPower = 0.0f;
     for(int i = 0; i < lights.size(); i++)
-        lights[i]->emitPhotons(*photonMap, config.photonCount, config.photonBounces);
+        totalPower += lights[i]->getIntensity();
+
+    for(int i = 0; i < lights.size(); i++){
+        int numPhotons = (lights[i]->getIntensity() / totalPower) * config.photonCount;
+        lights[i]->emitPhotons(*photonMap, numPhotons, config.photonBounces);
+    }
 
     photonMap->setup();
 }
@@ -90,7 +98,9 @@ void Raytracer::addLight(Light* newLight)
 
 Vector3 Raytracer::tracePixel(int x, int y)
 {
-    return config.sampler->samplePixel(x, y);
+    Vector3 result = config.sampler->samplePixel(x, y);
+    gammaCorrection(result);
+    return result;
 }
 
 Vector3 Raytracer::traceRay(Ray& ray)
@@ -106,6 +116,12 @@ Vector3 Raytracer::traceRay(Ray& ray)
     if(ray.s)
         return computeColor(ray, 0, 1.0f);
     return config.backColor;
+}
+
+void Raytracer::gammaCorrection(Vector3& color)
+{
+    for(int i = 0; i < 3; i++)
+        color.elements[i] = pow(color.elements[i], 1.0f / config.gamma);
 }
 
 //test the ray against all objects
@@ -155,10 +171,8 @@ float Raytracer::computeShadowFactor(Ray& ray, float range)
         if(objects.at(k)->intersectRay(ray, hit)){
             if(hit.t > Ray::SMALL && hit.t <= range && hit.t < minT){
                 minT = hit.t;
-                if(objects.at(k)->getMaterial().getRefraction() > 0.0f)
-                    factor = 0.5f;
-                else
-                    return 0.0f;
+                factor = 0.0f;
+                break;
             }
         }
     }
@@ -203,9 +217,10 @@ Vector3 Raytracer::computeColor(Ray& ray, int depth, float factor)
     }
 
     //final color
-    if(config.mode == Config::STANDARD)
-        return calculateLightStandard(ray, n) + reflection + refraction;
-    return calculateLightPhoton(ray, n) + reflection + refraction;
+    Vector3 color = calculateLightStandard(ray, n) + reflection + refraction;
+    if(config.mode == Config::PHOTON)
+        color += calculateLightPhoton(ray, n);
+    return color;
 }
 
 //computes the light calculations
@@ -236,10 +251,10 @@ Vector3 Raytracer::calculateLightPhoton(Ray& ray, Vector3& n)
     Vector3 color(0, 0, 0);
 
     std::vector<Photon*> photons;
-    photonMap->nearestN(ray.point, photons, config.maxPhotonSamples, config.photonSearchRadius);
+    photonMap->nearestN(ray.point, n, photons, config.maxPhotonSamples, config.photonSearchRadius);
 
     if(photons.size() == 0)
-        return amb;
+        return Vector3(0, 0, 0);
 
     float r = 0.0f;
     for(int i = 0; i < photons.size(); i++){
@@ -249,19 +264,28 @@ Vector3 Raytracer::calculateLightPhoton(Ray& ray, Vector3& n)
             r = len;
     }
 
+    float alpha = 0.918f;
+    float beta = 1.953f;
+
     for(int i = 0; i < photons.size(); i++){
         Vector3 l = -photons[i]->direction;
         l.normalize();
-        Vector3 factor = diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
+        Vector3 factor = (1.0f / 3.141592) * diffuse * ray.s->getMaterial().getDiffuseFactor() * max(Vector3::DotProduct(l, n), 0.0f);
         Vector3 power = photons[i]->power;
         factor.x *= power.x;
         factor.y *= power.y;
         factor.z *= power.z;
-        color += factor;
+
+        Vector3 dir = ray.point - photons[i]->pos;
+        float len = dir.getSqrLength();
+
+        //float gauss = alpha * (1.0f - ((1.0f - std::exp(-beta * len * len / (2.0f * r * r))) / (1.0f - std::exp(-beta))));
+
+        color += factor;// * gauss;
     }
 
-    float density = (4.0f * 3.141592653f * r * r);
-    return amb + (color * (1.0f / density));
+    float density = (3.141592653f * r * r);
+    return color * (1.0f / density);
 }
 
 Vector3 Raytracer::calculateShading(Ray& ray, Vector3& n, Vector3& l, Vector3& diffuse)
@@ -301,7 +325,7 @@ Vector3 Raytracer::calculateShading(Ray& ray, Vector3& n, Vector3& l, Vector3& d
         float C = max(0.0f, Vector3::DotProduct(VonXY, LonXY));
         //float C = max(0.0f, cos1 * cos2 + sin1 * sin2);
 
-        Vector3 temp = diffuse * ray.s->getMaterial().getDiffuseFactor() * max(0.0f, cos2) * (A + (B * C * s * t));
+        Vector3 temp = (1.0f / 3.141592) * diffuse * ray.s->getMaterial().getDiffuseFactor() * max(0.0f, cos2) * (A + (B * C * s * t));
         color += temp;
     }
     if(ray.s->getMaterial().getSpecularFactor() > 0.0){

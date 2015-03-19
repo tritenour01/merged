@@ -80,6 +80,8 @@ class AreaLight : public Light
 
         Vector3 illuminate(Ray&, Vector3&, Vector3&);
 
+        void emitPhotons(PhotonMap&, int, int);
+
     private:
 
         Vector3 right;

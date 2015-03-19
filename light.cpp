@@ -61,14 +61,18 @@ Vector3 PointLight::illuminate(Ray& ray, Vector3& n, Vector3& diffuse)
 void PointLight::emitPhotons(PhotonMap& photonMap, int num, int maxBounces)
 {
     PhotonTracer tracer(raytracer, photonMap, maxBounces);
-    for(int i = 0; i < num; i++){
+    int emitted = 0;
+    while(emitted < num){
         Vector3 dir;
         for(int i = 0; i < 3; i++)
             dir.elements[i] = (float)((rand() % 1001) - 500) / 500.0f;
-        dir.normalize();
-        Vector3 power = lightColor * (1.0f / (float)num);
-        Photon photon(position, dir, power);
-        tracer.tracePhoton(photon);
+        if(dir.getLength() <= 1.0f){
+            dir.normalize();
+            Vector3 power = intensity * lightColor * (1.0f / (float)num);
+            Photon photon(position, dir, power);
+            tracer.tracePhoton(photon);
+            emitted++;
+        }
     }
 }
 
@@ -202,6 +206,11 @@ Vector3 AreaLight::illuminate(Ray& ray, Vector3& n, Vector3& diffuse)
     */
 
     //*******jitter sampling******
+    Vector3 lightDir = Vector3::CrossProduct(right, up);
+    Vector3 pointDir = ray.point - position;
+    if(Vector3::DotProduct(lightDir, pointDir) < 0)
+        return Vector3(0, 0, 0);
+
     Vector3 totalColor(0, 0, 0);
     float currentX = 0.0f;
     float currentY = 0.0f;
@@ -233,4 +242,25 @@ Vector3 AreaLight::illuminate(Ray& ray, Vector3& n, Vector3& diffuse)
     }
 
     return totalColor * (1.0f / (float)(samplesx * samplesy));
+}
+
+void AreaLight::emitPhotons(PhotonMap& photonMap, int num, int maxBounces)
+{
+    PhotonTracer tracer(raytracer, photonMap, maxBounces);
+
+    Vector3 normal = Vector3::CrossProduct(right, up);
+    Hemisphere hemi(normal, 89.0f);
+
+    for(int i = 0; i < num; i++)
+    {
+        Vector3 dir = hemi.sample();
+        Vector3 power = intensity * lightColor * (1.0f / (float)num);
+
+        float uPos = (float)(rand() % 1001) / 1000.0f;
+        float vPos = (float)(rand() % 1001) / 1000.0f;
+        Vector3 pos = position + uPos * right + vPos * up;
+
+        Photon p(pos, dir, power);
+        tracer.tracePhoton(p);
+    }
 }

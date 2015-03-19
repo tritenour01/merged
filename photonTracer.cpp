@@ -17,8 +17,12 @@ void PhotonTracer::trace(Photon& p, int depth)
 
     Ray ray(p.pos, p.direction);
     if(raytracer->intersectRay(ray)){
-        Photon hit(ray.point, p.direction, p.power);
-        photonMap.store(hit);
+        if(ray.s->getMaterial().getDiffuseFactor() > 0.0f && depth != 0){
+            Vector3 normal = ray.s->computeNormal(ray);
+            Photon hit(ray.point, p.direction, p.power);
+            hit.normal = normal;
+            photonMap.store(hit);
+        }
     }
     else
         return;
@@ -28,8 +32,18 @@ void PhotonTracer::trace(Photon& p, int depth)
     Vector3 normal = ray.s->computeNormal(ray);
     Vector3 newDir;
 
-    if(action == DIFFUSE)
+    if(action == DIFFUSE){
         newDir = diffuseDirection(normal);
+        Vector3& power = p.power;
+        Vector3 diffuse = ray.s->getMaterial().getDiffuse(ray);
+        power.x *= diffuse.x;
+        power.y *= diffuse.y;
+        power.z *= diffuse.z;
+    }
+    else if(action == REFLECT)
+        newDir = reflectDirection(p.direction, normal);
+    else if(action == REFRACT)
+        newDir = refractDirection(p.direction, normal, ray.s->getMaterial().getIOR());
     else
         return;
 
@@ -43,50 +57,78 @@ PhotonTracer::Action PhotonTracer::determineAction(Ray& ray)
 {
     Shape* s = ray.s;
 
-    float diffuse = s->getMaterial().getDiffuseFactor();
+    Vector3 diffuseColor = s->getMaterial().getDiffuse(ray);
+    float diffuse = (diffuseColor.x + diffuseColor.y + diffuseColor.z) / 3.0f;
+    float reflect = s->getMaterial().getReflective();
+    float refract = s->getMaterial().getRefraction();
 
     float randomVal = (float)(rand() % 1025) / 1024.0f;
 
     if(randomVal <= diffuse)
         return DIFFUSE;
+    if(randomVal <= reflect)
+        return REFLECT;
+    if(randomVal <= refract)
+        return REFRACT;
     else
         return ABSORB;
 }
 
 Vector3 PhotonTracer::diffuseDirection(Vector3& normal)
 {
-    Vector3 tangent;
-    if(fabs(normal.x) >= Ray::SMALL || fabs(normal.z) >= Ray::SMALL)
-        tangent = Vector3::CrossProduct(normal, Vector3(0, 1, 0));
-    else
-        tangent = Vector3(1, 0, 0);
-
-    Vector3 bitangent = Vector3::CrossProduct(tangent, normal);
-    tangent.normalize();
-    bitangent.normalize();
-
-    Matrix4x4 tangentSpace;
-    tangentSpace[0] = tangent.x;
-    tangentSpace[1] = tangent.y;
-    tangentSpace[2] = tangent.z;
-    tangentSpace[4] = bitangent.x;
-    tangentSpace[5] = bitangent.y;
-    tangentSpace[6] = bitangent.z;
-    tangentSpace[8] = normal.x;
-    tangentSpace[9] = normal.y;
-    tangentSpace[10] = normal.z;
-
-    float maxAngle = 89.0f;
-    float m = cosf(maxAngle * 3.1415938f / 180.0f);
-
-    float u = (float)(rand() % 1025) / 1024.0f;
-    float v = (float)(rand() % 1025) / 1024.0f;
-    float theta = 2.0f * 3.1415938f * v;
-    float factor = sqrtf(1.0f - powf(1.0f - u * (1.0f - m), 2.0f));
-    Vector3 d(factor * cosf(theta), factor * sinf(theta), 1 - u * (1.0f - m));
-
-    Vector3 dir;
-    Matrix4x4::transformDirection(tangentSpace, dir, d);
-
+    Hemisphere hemi(normal, 89.0f);
+    Vector3 dir = hemi.sample();
     return dir;
+}
+
+Vector3 PhotonTracer::reflectDirection(Vector3& dir, Vector3& normal)
+{
+    Vector3 newDir = (2.0f * Vector3::DotProduct(normal, dir) * normal) - dir;
+    return newDir;
+}
+
+Vector3 PhotonTracer::refractDirection(Vector3& dir, Vector3& normal, float IOR)
+{
+    Vector3 result;
+
+    bool TIR = false;
+    float n = 1.0f;
+    float nt = IOR;
+
+    //entering the object
+    if(Vector3::DotProduct(dir, normal) < 0){
+        //refraction index
+        float compN = n / nt;
+
+        //compute the refracted direction
+        double c1, cs2;
+        c1 = -Vector3::DotProduct(dir, normal);
+        cs2 = 1.0f - compN * compN * (1.0f - c1 * c1);
+        result = compN * dir + (compN * c1 - sqrt(cs2)) *  normal;
+        result.normalize();
+    }
+    //exiting the glass
+    else{
+        //refraction index
+        float compN = nt / n;
+
+        double c1, cs2;
+        c1 = Vector3::DotProduct(dir, normal);
+        cs2 = 1.0f - compN * compN * (1.0f - c1 * c1);
+
+        if(cs2 < 0.0f)
+            TIR = true;
+
+        if(!TIR){
+            //compute the refracted direction
+            result = compN * dir - (compN * c1 - sqrt(cs2)) *  normal;
+            result.normalize();
+        }
+    }
+
+    if(TIR){
+        Vector3 negativeNormal = -normal;
+        return reflectDirection(dir, negativeNormal);
+    }
+    return result;
 }

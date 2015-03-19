@@ -11,13 +11,25 @@ struct Photon
     Vector3 pos;
     Vector3 direction;
     Vector3 power;
+    Vector3 normal;
 
     Photon(Vector3& p, Vector3& d, Vector3& c)
     {
         pos = p;
         direction = d;
         power = c;
+        normal = Vector3(0, 0, 0);
     }
+};
+
+struct NearestN
+{
+    Vector3 pos;
+    Vector3 normal;
+    std::vector<float>* distances;
+    std::vector<Photon*>* results;
+    int num;
+    float radius;
 };
 
 struct KDnode
@@ -46,14 +58,14 @@ class PhotonMap
         void setup(void);
 
         Photon& nearest(Vector3&);
-        void nearestN(Vector3&, std::vector<Photon*>&, int, float);
+        void nearestN(Vector3&, Vector3&, std::vector<Photon*>&, int, float);
 
     private:
 
         KDnode* constructTree(std::vector<Photon*>&, int);
 
         Photon* nearestSearch(Vector3&, KDnode*);
-        void nearestNSearch(Vector3&, KDnode*, std::vector<float>&, std::vector<Photon*>&, int, float);
+        void nearestNSearch(KDnode*, NearestN*);
 
         float distanceBetween(Vector3&, Vector3&);
 
