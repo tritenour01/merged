@@ -13,22 +13,38 @@ TEMPLATE = app
 
 CONFIG += c++11 static
 
-INCLUDEPATH += $$quote(C:/Program Files (x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\include)
-INCLUDEPATH += $$quote(C:\Users\Tim Ritenour\Documents\C++\raytracer\raytracer)
+win32{
+    INCLUDEPATH += $$quote(C:/Program Files (x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\include)
+    INCLUDEPATH += $$quote(C:\Users\Tim Ritenour\Documents\C++\raytracer\raytracer)
 
-CONFIG(Debug){
-    LIBS += -static -L"C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Debug" -lraytracer
-    PRE_TARGETDEPS += "C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Debug\libraytracer.a"
+    CONFIG(Debug){
+        LIBS += -static -L"C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Debug" -lraytracer
+        PRE_TARGETDEPS += "C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Debug\libraytracer.a"
 
-    LIBS += -static -L"C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib" -lsfml-graphics-d
-    PRE_TARGETDEPS += "C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib\libsfml-graphics-d.a"
+        LIBS += -static -L"C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib" -lsfml-graphics-d
+        PRE_TARGETDEPS += "C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib\libsfml-graphics-d.a"
+    }
+    else{
+        LIBS += -static -L"C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Release" -lraytracer
+        PRE_TARGETDEPS += "C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Release\libraytracer.a"
+
+        LIBS += -static -L"C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib" -lsfml-graphics
+        PRE_TARGETDEPS += "C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib\libsfml-graphics.a"
+    }
 }
-else{
-    LIBS += -static -L"C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Release" -lraytracer
-    PRE_TARGETDEPS += "C:\Users\Tim"" ""Ritenour\Documents\C++\raytracer\raytracer\bin\Release\libraytracer.a"
 
-    LIBS += -static -L"C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib" -lsfml-graphics
-    PRE_TARGETDEPS += "C:\Program"" ""Files"" ""(x86)\CodeBlocks\MinGW\x86_64-w64-mingw32\lib\libsfml-graphics.a"
+linux-g++{
+    DEPENDPATH += "/home/tim/Documents/raytracer/raytracer"
+    INCLUDEPATH += "/home/tim/Documents/raytracer/raytracer"
+
+    CONFIG(debug, debug|release){
+        LIBS += -L"/home/tim/Documents/raytracer/raytracer/bin/Debug" -lraytracer
+        PRE_TARGETDEPS += "/home/tim/Documents/raytracer/raytracer/bin/Debug/libraytracer.so"
+    }
+    else{
+        LIBS += -L"/home/tim/Documents/raytracer/raytracer/bin/Release" -lraytracer
+        PRE_TARGETDEPS += "/home/tim/Documents/raytracer/raytracer/bin/Release/libraytracer.so"
+    }
 }
 
 SOURCES += main.cpp \
@@ -48,12 +64,12 @@ SOURCES += main.cpp \
     deviceManager.cpp \
     device.cpp \
     connection.cpp \
-    UIemitter.cpp \
     settingDockWidget.cpp \
     previewWindow.cpp \
     jobWidget.cpp \
     jobManager.cpp \
-    renderJob.cpp
+    renderJob.cpp \
+    UIprogressEvent.cpp
 
 HEADERS  += \
     mainwindow.h \
@@ -73,9 +89,9 @@ HEADERS  += \
     deviceManager.h \
     device.h \
     connection.h \
-    UIemitter.h \
     settingDockWidget.h \
     previewWindow.h \
     jobWidget.h \
     jobManager.h \
-    renderJob.h
+    renderJob.h \
+    UIprogressEvent.h

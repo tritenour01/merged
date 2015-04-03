@@ -6,7 +6,7 @@
 #include <QProgressBar>
 #include <QStatusBar>
 #include <previewWidget.h>
-#include <UIImage.h>
+#include <UIimage.h>
 #include <QToolButton>
 
 class PreviewWindow : public QMainWindow

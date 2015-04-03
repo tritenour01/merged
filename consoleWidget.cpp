@@ -1,7 +1,6 @@
 #include <consoleWidget.h>
 #include <UIlogger.h>
 
-
 consoleWidget::consoleWidget(void)
 {
     logs = new QPlainTextEdit();
