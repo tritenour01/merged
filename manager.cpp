@@ -49,7 +49,7 @@ void Manager::Render(void)
         basicRender();
     else{
         for(int i = 0; i < numThreads; i++)
-            threads.push_back(thread(threadedRender, this, i));
+            threads.push_back(thread(&Manager::threadedRender, this, i));
         threadsActive = numThreads;
         unique_lock<mutex> l(condMutex);
         renderDone.wait(l);

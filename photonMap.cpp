@@ -70,6 +70,7 @@ KDnode* PhotonMap::constructTree(std::vector<Photon*>& dataSet, int depth)
         KDnode* node = new KDnode;
         node->median = median;
         node->axis = axis;
+
         node->LeftChild = constructTree(leftData, depth + 1);
         node->rightChild = constructTree(rightData, depth + 1);
 
@@ -82,16 +83,10 @@ void PhotonMap::store(Photon& p)
     photons.push_back(p);
 }
 
-float PhotonMap::distanceBetween(Vector3& v1, Vector3& v2)
+float PhotonMap::distanceBetweenSqr(Vector3& v1, Vector3& v2)
 {
     Vector3 distVector = v1 - v2;
-    return distVector.getLength();
-}
-
-Photon& PhotonMap::nearest(Vector3& pos)
-{
-    Photon* near = nearestSearch(pos, root);
-    return *near;
+    return distVector.getSqrLength();
 }
 
 void PhotonMap::nearestN(Vector3& pos, Vector3& normal, std::vector<Photon*>& results, int num, float radius)
@@ -103,64 +98,12 @@ void PhotonMap::nearestN(Vector3& pos, Vector3& normal, std::vector<Photon*>& re
     near.pos = pos;
     near.normal = normal;
     near.results = &results;
-    near.distances = &distances;
+    near.sqrDistances = &distances;
+    near.maxDistSqr = -1.0f;
     near.num = num;
-    near.radius = radius;
+    near.radiusSqr = radius * radius;
+    near.isHeap = false;
     nearestNSearch(root, &near);
-}
-
-Photon* PhotonMap::nearestSearch(Vector3& pos, KDnode* node)
-{
-    if(node->data.size() > 0){
-        float closestDist = 1e8f;
-        int closestIndex;
-        for(int i = 0; i < node->data.size(); i++){
-            Photon* current = node->data[i];
-            float dist = distanceBetween(pos, current->pos);
-            if(dist < closestDist){
-                closestDist = dist;
-                closestIndex = i;
-            }
-        }
-        return node->data[closestIndex];
-    }
-
-    if(node->LeftChild && node->rightChild){
-        if(pos.elements[node->axis] < node->median){
-            Photon* leftPhoton = nearestSearch(pos, node->LeftChild);
-            float dist = distanceBetween(pos, leftPhoton->pos);
-            if(dist >= node->median - leftPhoton->pos.elements[node->axis]){
-                Photon* rightPhoton = nearestSearch(pos, node->rightChild);
-                if(dist < distanceBetween(pos, rightPhoton->pos))
-                    return leftPhoton;
-                else
-                    return rightPhoton;
-            }
-            else
-                return leftPhoton;
-        }
-        else{
-            Photon* rightPhoton = nearestSearch(pos, node->rightChild);
-            float dist = distanceBetween(pos, rightPhoton->pos);
-            if(dist >= rightPhoton->pos.elements[node->axis] - node->median){
-                Photon* leftPhoton = nearestSearch(pos, node->LeftChild);
-                if(dist < distanceBetween(pos, leftPhoton->pos))
-                    return rightPhoton;
-                else
-                    return leftPhoton;
-            }
-            else
-                return rightPhoton;
-        }
-    }
-    else if(node->LeftChild){
-        return nearestSearch(pos, node->LeftChild);
-    }
-    else if(node->rightChild){
-        return nearestSearch(pos, node->rightChild);
-    }
-    else
-        Log::writeLine("Something went wrong");
 }
 
 void PhotonMap::nearestNSearch(KDnode* node, NearestN* near)
@@ -170,32 +113,54 @@ void PhotonMap::nearestNSearch(KDnode* node, NearestN* near)
         for(int i = 0; i < node->data.size(); i++){
             Photon* current = node->data[i];
             float dot = Vector3::DotProduct(near->normal, current->normal);
-            float dist = distanceBetween(near->pos, current->pos);
-            if(dist <= near->radius && dot >= 0.9){
-                if(near->distances->size() < near->num){
-                    near->distances->push_back(dist);
+            float distSqr = distanceBetweenSqr(near->pos, current->pos);
+            if(distSqr <= near->radiusSqr && dot >= 0.9){
+                if(near->sqrDistances->size() < near->num){
+                    near->sqrDistances->push_back(distSqr);
                     near->results->push_back(current);
+                    near->maxDistSqr = max(near->maxDistSqr, distSqr);
                 }
                 else{
-                    if(maxDist < 0){
-                        for(int j = 0; j < near->distances->size(); j++)
-                            maxDist = max(maxDist, near->distances->at(j));
-                    }
-                    if(dist > maxDist)
-                        continue;
-                    int index;
-                    float d = 0.0f;
-                    for(int j = 0; j < near->distances->size(); j++){
-                        if(near->distances->at(j) > d){
-                            index = j;
-                            d = near->distances->at(j);
+                    if(!near->isHeap){
+                        int half = near->num / 2;
+                        for(int i = half; i >= 0; i--){
+                            float distanceSqr = near->sqrDistances->at(i);
+                            Photon* photon = near->results->at(i);
+                            int parent = i + 1;
+                            while(parent <= half){
+                                int child = parent * 2;
+                                if(child < near->num && near->sqrDistances->at(child -1) < near->sqrDistances->at(child + 1 - 1))
+                                    child++;
+                                if(distanceSqr > near->sqrDistances->at(child - 1))
+                                    break;
+                                near->sqrDistances->at(parent - 1) = near->sqrDistances->at(child - 1);
+                                near->results->at(parent - 1) = near->results->at(child - 1);
+                                parent = child;
+                            }
+                            near->sqrDistances->at(parent - 1) = distanceSqr;
+                            near->results->at(parent - 1) = photon;
                         }
+                        near->isHeap = true;
                     }
-                    near->distances->at(index) = dist;
-                    near->results->at(index) = current;
-                    maxDist = 0.0f;
-                    for(int j = 0; j < near->distances->size(); j++)
-                        maxDist = max(maxDist, near->distances->at(j));
+
+                    if(distSqr >= near->sqrDistances->at(0))
+                        continue;
+
+                    int parent = 1;
+                    int child = 2;
+                    while(child <= near->num){
+                        if(child < near->num && near->sqrDistances->at(child - 1) < near->sqrDistances->at(child + 1 - 1))
+                            child++;
+                        if(distSqr > near->sqrDistances->at(child - 1))
+                            break;
+                        near->sqrDistances->at(parent - 1) = near->sqrDistances->at(child - 1);
+                        near->results->at(parent - 1) = near->results->at(child - 1);
+                        parent = child;
+                        child += child;
+                    }
+                    near->sqrDistances->at(parent - 1) = distSqr;
+                    near->results->at(parent - 1) = current;
+                    near->maxDistSqr = near->sqrDistances->at(0);
                 }
             }
         }
@@ -205,25 +170,25 @@ void PhotonMap::nearestNSearch(KDnode* node, NearestN* near)
     if(node->LeftChild && node->rightChild){
         if(near->pos.elements[node->axis] < node->median){
             nearestNSearch(node->LeftChild, near);
-            float dist = 0;
-            if(near->distances->size() == 0)
-                dist = 1e8f;
-            for(int i = 0; i < near->distances->size(); i++)
-                dist = max(dist, near->distances->at(i));
-            if(near->pos.elements[node->axis] + dist >= node->median &&
-               near->pos.elements[node->axis] + near->radius >= node->median){
+            float maxDist = near->maxDistSqr;
+            if(maxDist < 0)
+                maxDist = 1e8f;
+            float dist = node->median - near->pos.elements[node->axis];
+            if(dist * dist <= near->radiusSqr &&
+               (near->sqrDistances->size() != near->num || (near->sqrDistances->size() == near->num &&
+               dist * dist <= maxDist))){
                 nearestNSearch(node->rightChild, near);
             }
         }
         else{
             nearestNSearch(node->rightChild, near);
-            float dist = 0;
-            if(near->distances->size() == 0)
-                dist = 1e8f;
-            for(int i = 0; i < near->distances->size(); i++)
-                dist = max(dist, near->distances->at(i));
-            if(near->pos.elements[node->axis] - dist < node->median &&
-               near->pos.elements[node->axis] - near->radius < node->median){
+            float maxDist = near->maxDistSqr;
+            if(maxDist < 0)
+                maxDist = 1e8f;
+            float dist = near->pos.elements[node->axis] - node->median;
+            if(dist * dist <= near->radiusSqr &&
+               (near->sqrDistances->size() != near->num || (near->sqrDistances->size() == near->num &&
+               dist * dist <= maxDist))){
                 nearestNSearch(node->LeftChild, near);
             }
         }

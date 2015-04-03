@@ -26,10 +26,12 @@ struct NearestN
 {
     Vector3 pos;
     Vector3 normal;
-    std::vector<float>* distances;
+    std::vector<float>* sqrDistances;
+    float maxDistSqr;
     std::vector<Photon*>* results;
     int num;
-    float radius;
+    float radiusSqr;
+    bool isHeap;
 };
 
 struct KDnode
@@ -57,17 +59,15 @@ class PhotonMap
 
         void setup(void);
 
-        Photon& nearest(Vector3&);
         void nearestN(Vector3&, Vector3&, std::vector<Photon*>&, int, float);
 
     private:
 
         KDnode* constructTree(std::vector<Photon*>&, int);
 
-        Photon* nearestSearch(Vector3&, KDnode*);
         void nearestNSearch(KDnode*, NearestN*);
 
-        float distanceBetween(Vector3&, Vector3&);
+        float distanceBetweenSqr(Vector3&, Vector3&);
 
         KDnode* root;
         int maxDepth;
