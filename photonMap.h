@@ -39,8 +39,7 @@ struct KDnode
     KDnode* LeftChild;
     KDnode* rightChild;
     int axis;
-    float median;
-    std::vector<Photon*> data;
+    Photon* data;
 
     KDnode(void)
     {
@@ -70,7 +69,6 @@ class PhotonMap
         float distanceBetweenSqr(Vector3&, Vector3&);
 
         KDnode* root;
-        int maxDepth;
 
         std::vector<Photon> photons;
 };

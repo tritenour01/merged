@@ -3,7 +3,6 @@
 PhotonMap::PhotonMap(void)
 {
     root = NULL;
-    maxDepth = 10;
 }
 
 void PhotonMap::setup(void)
@@ -37,11 +36,10 @@ KDnode* PhotonMap::constructTree(std::vector<Photon*>& dataSet, int depth)
 {
     if(dataSet.size() == 0)
         return NULL;
-    else if(depth >= maxDepth || dataSet.size() == 1){
+    else if(dataSet.size() == 1){
         KDnode* node = new KDnode;
-        for(int i = 0; i < dataSet.size(); i++){
-            node->data.push_back(dataSet[i]);
-        }
+        node->data = dataSet[0];
+        node->axis = -1;
         return node;
     }
     else{
@@ -54,7 +52,12 @@ KDnode* PhotonMap::constructTree(std::vector<Photon*>& dataSet, int depth)
         else
             std::sort(dataSet.begin(), dataSet.end(), sortByZ);
 
-        float median = dataSet[dataSet.size() / 2]->pos.elements[axis];
+        KDnode* node = new KDnode;
+        node->data = dataSet[dataSet.size() / 2];
+        node->axis = axis;
+
+        dataSet.erase(dataSet.begin() + dataSet.size() / 2);
+        float median = node->data->pos.elements[axis];
 
         std::vector<Photon*> leftData;
         std::vector<Photon*> rightData;
@@ -66,10 +69,6 @@ KDnode* PhotonMap::constructTree(std::vector<Photon*>& dataSet, int depth)
             else
                 rightData.push_back(photon);
         }
-
-        KDnode* node = new KDnode;
-        node->median = median;
-        node->axis = axis;
 
         node->LeftChild = constructTree(leftData, depth + 1);
         node->rightChild = constructTree(rightData, depth + 1);
@@ -108,72 +107,13 @@ void PhotonMap::nearestN(Vector3& pos, Vector3& normal, std::vector<Photon*>& re
 
 void PhotonMap::nearestNSearch(KDnode* node, NearestN* near)
 {
-    if(node->data.size() > 0){
-        float maxDist = -1.0f;
-        for(int i = 0; i < node->data.size(); i++){
-            Photon* current = node->data[i];
-            float dot = Vector3::DotProduct(near->normal, current->normal);
-            float distSqr = distanceBetweenSqr(near->pos, current->pos);
-            if(distSqr <= near->radiusSqr && dot >= 0.9){
-                if(near->sqrDistances->size() < near->num){
-                    near->sqrDistances->push_back(distSqr);
-                    near->results->push_back(current);
-                    near->maxDistSqr = max(near->maxDistSqr, distSqr);
-                }
-                else{
-                    if(!near->isHeap){
-                        int half = near->num / 2;
-                        for(int i = half; i >= 0; i--){
-                            float distanceSqr = near->sqrDistances->at(i);
-                            Photon* photon = near->results->at(i);
-                            int parent = i + 1;
-                            while(parent <= half){
-                                int child = parent * 2;
-                                if(child < near->num && near->sqrDistances->at(child -1) < near->sqrDistances->at(child + 1 - 1))
-                                    child++;
-                                if(distanceSqr > near->sqrDistances->at(child - 1))
-                                    break;
-                                near->sqrDistances->at(parent - 1) = near->sqrDistances->at(child - 1);
-                                near->results->at(parent - 1) = near->results->at(child - 1);
-                                parent = child;
-                            }
-                            near->sqrDistances->at(parent - 1) = distanceSqr;
-                            near->results->at(parent - 1) = photon;
-                        }
-                        near->isHeap = true;
-                    }
-
-                    if(distSqr >= near->sqrDistances->at(0))
-                        continue;
-
-                    int parent = 1;
-                    int child = 2;
-                    while(child <= near->num){
-                        if(child < near->num && near->sqrDistances->at(child - 1) < near->sqrDistances->at(child + 1 - 1))
-                            child++;
-                        if(distSqr > near->sqrDistances->at(child - 1))
-                            break;
-                        near->sqrDistances->at(parent - 1) = near->sqrDistances->at(child - 1);
-                        near->results->at(parent - 1) = near->results->at(child - 1);
-                        parent = child;
-                        child += child;
-                    }
-                    near->sqrDistances->at(parent - 1) = distSqr;
-                    near->results->at(parent - 1) = current;
-                    near->maxDistSqr = near->sqrDistances->at(0);
-                }
-            }
-        }
-        return;
-    }
-
     if(node->LeftChild && node->rightChild){
-        if(near->pos.elements[node->axis] < node->median){
+        if(near->pos.elements[node->axis] < node->data->pos.elements[node->axis]){
             nearestNSearch(node->LeftChild, near);
             float maxDist = near->maxDistSqr;
             if(maxDist < 0)
                 maxDist = 1e8f;
-            float dist = node->median - near->pos.elements[node->axis];
+            float dist = node->data->pos.elements[node->axis] - near->pos.elements[node->axis];
             if(dist * dist <= near->radiusSqr &&
                (near->sqrDistances->size() != near->num || (near->sqrDistances->size() == near->num &&
                dist * dist <= maxDist))){
@@ -185,7 +125,7 @@ void PhotonMap::nearestNSearch(KDnode* node, NearestN* near)
             float maxDist = near->maxDistSqr;
             if(maxDist < 0)
                 maxDist = 1e8f;
-            float dist = near->pos.elements[node->axis] - node->median;
+            float dist = near->pos.elements[node->axis] - node->data->pos.elements[node->axis];
             if(dist * dist <= near->radiusSqr &&
                (near->sqrDistances->size() != near->num || (near->sqrDistances->size() == near->num &&
                dist * dist <= maxDist))){
@@ -198,5 +138,59 @@ void PhotonMap::nearestNSearch(KDnode* node, NearestN* near)
     }
     else if(node->rightChild){
         nearestNSearch(node->rightChild, near);
+    }
+
+    float maxDist = -1.0f;
+    Photon* data = node->data;
+    float dot = Vector3::DotProduct(near->normal, data->normal);
+    float distSqr = distanceBetweenSqr(near->pos, data->pos);
+    if(distSqr <= near->radiusSqr && dot >= 0.9){
+        if(near->sqrDistances->size() < near->num){
+            near->sqrDistances->push_back(distSqr);
+            near->results->push_back(data);
+            near->maxDistSqr = max(near->maxDistSqr, distSqr);
+        }
+        else{
+            if(!near->isHeap){
+                int half = near->num / 2;
+                for(int i = half; i >= 0; i--){
+                    float distanceSqr = near->sqrDistances->at(i);
+                    Photon* photon = near->results->at(i);
+                    int parent = i + 1;
+                    while(parent <= half){
+                        int child = parent * 2;
+                        if(child < near->num && near->sqrDistances->at(child -1) < near->sqrDistances->at(child + 1 - 1))
+                            child++;
+                        if(distanceSqr > near->sqrDistances->at(child - 1))
+                            break;
+                        near->sqrDistances->at(parent - 1) = near->sqrDistances->at(child - 1);
+                        near->results->at(parent - 1) = near->results->at(child - 1);
+                        parent = child;
+                    }
+                    near->sqrDistances->at(parent - 1) = distanceSqr;
+                    near->results->at(parent - 1) = photon;
+                }
+                near->isHeap = true;
+            }
+
+            if(distSqr >= near->sqrDistances->at(0))
+                return;
+
+            int parent = 1;
+            int child = 2;
+            while(child <= near->num){
+                if(child < near->num && near->sqrDistances->at(child - 1) < near->sqrDistances->at(child + 1 - 1))
+                    child++;
+                if(distSqr > near->sqrDistances->at(child - 1))
+                    break;
+                near->sqrDistances->at(parent - 1) = near->sqrDistances->at(child - 1);
+                near->results->at(parent - 1) = near->results->at(child - 1);
+                parent = child;
+                child += child;
+            }
+            near->sqrDistances->at(parent - 1) = distSqr;
+            near->results->at(parent - 1) = data;
+            near->maxDistSqr = near->sqrDistances->at(0);
+        }
     }
 }
