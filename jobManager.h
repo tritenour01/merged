@@ -17,6 +17,7 @@ class JobManager : public QObject
 
         void addJob(QString, string);
         void showViewer(int);
+        void killJob(int);
 
         void setWidget(JobWidget*);
 
@@ -24,6 +25,7 @@ class JobManager : public QObject
 
         void jobDone(void);
         void jobInvalid(void);
+        void jobInterrupted(void);
 
         void setImage(UIimage*);
 

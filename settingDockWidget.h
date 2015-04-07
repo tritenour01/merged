@@ -20,6 +20,8 @@ class SettingDockWidget : public QDockWidget
         void read(void);
         void write(void);
 
+        void readOnly(bool);
+
     private:
 
         QTabWidget* tabs;

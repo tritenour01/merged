@@ -18,6 +18,11 @@ SettingDockWidget::SettingDockWidget(QMainWindow* parent, fileManager* m, JobMan
     tabs->addTab(console, "Log");
 }
 
+void SettingDockWidget::readOnly(bool b)
+{
+    properties->readOnly(b);
+}
+
 void SettingDockWidget::read(void)
 {
     properties->read();

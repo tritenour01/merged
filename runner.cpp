@@ -4,6 +4,10 @@
 
 Worker::Worker(string path, int t, int b, UIprogressEvent* e)
 {
+    manager = NULL;
+
+    interrupted = false;
+
     image = NULL;
     handler = e;
 
@@ -14,7 +18,14 @@ Worker::Worker(string path, int t, int b, UIprogressEvent* e)
 
 Worker::~Worker(void)
 {
+    delete manager;
+}
 
+void Worker::interrupt(void)
+{
+    interrupted = true;
+    if(manager)
+        manager->interrupt();
 }
 
 void Worker::Render(void)
@@ -30,13 +41,18 @@ void Worker::Render(void)
     img = new UIimage("image", R.getWidth(), R.getHeight(), image->bits());
     emit imageReady(img);
 
-    Manager manager(threads, blocks, img, &R);
-    manager.setEventHandler(handler);
-    manager.Render();
+    manager = new Manager(threads, blocks, img, &R);
+    manager->setEventHandler(handler);
+
+    if(!interrupted)
+        manager->Render();
 
     image->save("image.png", "PNG");
 
-    emit renderComplete();
+    if(interrupted)
+        emit renderInterrupted();
+    else
+        emit renderComplete();
 }
 
 Runner::Runner(void)
@@ -56,18 +72,23 @@ void Runner::runRenderer(string sceneData, UIprogressEvent* e)
     file<<sceneData;
 
     handler = e;
-    handler->lineComplete(0, 1);
 
-    Worker* work = new Worker(path, threads, blocks, handler);
+    currentWorker = new Worker(path, threads, blocks, handler);
     QThread* thread = new QThread();
-    work->moveToThread(thread);
+    currentWorker->moveToThread(thread);
 
-    connect(thread, SIGNAL(started()), work, SLOT(Render()));
-    connect(work, SIGNAL(imageReady(UIimage*)), this, SLOT(setImage(UIimage*)));
-    connect(work, SIGNAL(renderComplete()), this, SLOT(done()));
-    connect(work, SIGNAL(renderInvalid()), this, SLOT(invalid()));
+    connect(thread, SIGNAL(started()), currentWorker, SLOT(Render()));
+    connect(currentWorker, SIGNAL(imageReady(UIimage*)), this, SLOT(setImage(UIimage*)));
+    connect(currentWorker, SIGNAL(renderComplete()), this, SLOT(done()));
+    connect(currentWorker, SIGNAL(renderInvalid()), this, SLOT(invalid()));
+    connect(currentWorker, SIGNAL(renderInterrupted()), this, SLOT(interrupted()));
 
     thread->start();
+}
+
+void Runner::killRender(void)
+{
+    currentWorker->interrupt();
 }
 
 void Runner::setManager(JobManager* m)
@@ -98,4 +119,9 @@ void Runner::done(void)
 void Runner::invalid(void)
 {
     emit renderInvalid();
+}
+
+void Runner::interrupted(void)
+{
+    emit renderInterrupted();
 }

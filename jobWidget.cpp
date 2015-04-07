@@ -73,7 +73,7 @@ void JobWidget::viewButtonClick(int id)
 
 void JobWidget::deleteButtonClick(int id)
 {
-
+    manager->killJob(id);
 }
 
 TableEntry::TableEntry(RenderJob* job)
@@ -107,6 +107,8 @@ int TableEntry::getID(void)
 void TableEntry::updateStatus(RenderJob::STATUS s)
 {
     statusItem->setData(0, RenderJob::statusToString(s));
+    if(s == RenderJob::STATUS::Complete)
+        deleteButton->setEnabled(false);
 }
 
 void TableEntry::updateProgress(int p)

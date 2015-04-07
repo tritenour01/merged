@@ -27,6 +27,7 @@ class RenderJob : public QObject
         void Render(void);
         void Error(void);
         void Done(void);
+        void Interrupted(void);
 
         void setImage(UIimage*);
 

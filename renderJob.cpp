@@ -68,6 +68,12 @@ void RenderJob::Done(void)
     emit statusChanged(status);
 }
 
+void RenderJob::Interrupted(void)
+{
+    status = Aborted;
+    emit statusChanged(status);
+}
+
 void RenderJob::setImage(UIimage* i)
 {
     image = i;

@@ -323,7 +323,12 @@ renderModeContainer::renderModeContainer(fileManager* m) :
 
 void renderModeContainer::readOnly(bool b)
 {
-
+    mode->setEnabled(!b);
+    ambient->setReadOnly(b);
+    photonCount->setReadOnly(b);
+    samples->setReadOnly(b);
+    radius->setReadOnly(b);
+    bounces->setReadOnly(b);
 }
 
 void renderModeContainer::write(sceneData* scene)

@@ -26,6 +26,7 @@ class Worker : public QObject
     public:
 
         Worker(string, int, int, UIprogressEvent*);
+        void interrupt(void);
         ~Worker();
 
     public slots:
@@ -37,8 +38,12 @@ class Worker : public QObject
         void imageReady(UIimage*);
         void renderComplete(void);
         void renderInvalid(void);
+        void renderInterrupted(void);
 
     private:
+
+        Manager* manager;
+        bool interrupted;
 
         QImage* image;
         UIimage* img;
@@ -57,6 +62,7 @@ class Runner : public QObject
 
         Runner(void);
         void runRenderer(string, UIprogressEvent*);
+        void killRender(void);
 
         void setThreads(int);
         void setBlocks(int);
@@ -68,14 +74,18 @@ class Runner : public QObject
         void setImage(UIimage*);
         void done(void);
         void invalid(void);
+        void interrupted(void);
 
     signals:
 
         void imageReady(UIimage*);
         void renderComplete(void);
         void renderInvalid(void);
+        void renderInterrupted(void);
 
     private:
+
+        Worker* currentWorker;
 
         UIprogressEvent* handler;
         JobManager* manager;

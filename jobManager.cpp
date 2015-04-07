@@ -11,6 +11,7 @@ JobManager::JobManager(Runner* r)
     connect(runner, SIGNAL(imageReady(UIimage*)), this, SLOT(setImage(UIimage*)));
     connect(runner, SIGNAL(renderComplete()), this, SLOT(jobDone()));
     connect(runner, SIGNAL(renderInvalid()), this, SLOT(jobInvalid()));
+    connect(runner, SIGNAL(renderInterrupted()), this, SLOT(jobInterrupted()));
 }
 
 void JobManager::addJob(QString sceneName, string data)
@@ -75,6 +76,15 @@ void JobManager::jobInvalid(void)
     runJob();
 }
 
+void JobManager::jobInterrupted(void)
+{
+    currentJob->Interrupted();
+    currentJob = NULL;
+    busy = false;
+
+    runJob();
+}
+
 void JobManager::showViewer(int id)
 {
     RenderJob* job = NULL;
@@ -86,6 +96,11 @@ void JobManager::showViewer(int id)
     }
 
     job->showViewer();
+}
+
+void JobManager::killJob(int id)
+{
+    runner->killRender();
 }
 
 void JobManager::setImage(UIimage* i)

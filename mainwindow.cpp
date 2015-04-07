@@ -36,6 +36,7 @@ void window::setup(void)
 
     settings = new SettingDockWidget(this, manager, jobManager);
     addDockWidget(Qt::LeftDockWidgetArea, settings);
+    settings->readOnly(true);
 
     threadAction[0]->trigger();
     blockAction[0]->trigger();
@@ -73,6 +74,8 @@ void window::newScene(void)
 
     currentFile->setItemText(index, fileName + "*");
     manager->edited();
+
+    settings->readOnly(false);
 }
 
 void window::openScene(void)
@@ -85,6 +88,8 @@ void window::openScene(void)
     currentFile->addItem(fileName, fileID);
     int index = currentFile->findData(fileID);
     currentFile->setCurrentIndex(index);
+
+    settings->readOnly(false);
 }
 
 bool window::saveScene(void)
@@ -124,6 +129,8 @@ void window::closeScene(void)
 
     if(nextFileID != -1)
         currentFile->setCurrentIndex(currentFile->findData(nextFileID));
+    else
+        settings->readOnly(true);
     currentFile->removeItem(index);
 }
 
