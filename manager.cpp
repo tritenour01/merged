@@ -6,6 +6,7 @@ Manager::Manager(int num, int blockSetup, Image* i, Raytracer* r)
     numThreads = num;
     img = i;
     raytracer = r;
+    interruptFlag = false;
 
     numBlocks = blockSetup * blockSetup;
     currentBlock = 0;
@@ -56,10 +57,17 @@ void Manager::Render(void)
     }
 }
 
+void Manager::interrupt(void)
+{
+    interruptFlag = true;
+}
+
 void Manager::basicRender(void)
 {
     for(int i = 0; i < raytracer->getHeight(); i++){
         for(int j = 0; j < raytracer->getWidth(); j++){
+            if(interruptFlag)
+                return;
             Vector3 color = raytracer->tracePixel(j, i);
             img->setPixel(j, i, color);
 
@@ -87,10 +95,14 @@ void Manager::threadedRender(int id)
         current = &blocks[newBlock];
         for(int i = 0; i < current->height; i++){
             for(int j = 0; j < current->width; j++){
+                if(interruptFlag)
+                    break;
                 Vector3 color = raytracer->tracePixel(current->initX + j, current->initY + i);
                 img->setPixel(current->initX + j, current->initY + i, color);
             }
         }
+        if(interruptFlag)
+            break;
         progress->blockComplete();
     }
 

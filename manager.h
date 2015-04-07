@@ -26,6 +26,8 @@ class Manager
 
         void Render(void);
 
+        void interrupt(void);
+
         void setEventHandler(ProgressEvent*);
 
     private:
@@ -35,6 +37,8 @@ class Manager
 
         int threadsActive;
         mutex active;
+
+        bool interruptFlag;
 
         Image* img;
         Raytracer* raytracer;
