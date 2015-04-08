@@ -14,7 +14,6 @@
 #include <editWidget.h>
 #include <fileManager.h>
 #include <runner.h>
-#include <networkingDialog.h>
 #include <settingDockWidget.h>
 
 class window : public QMainWindow
@@ -37,8 +36,6 @@ class window : public QMainWindow
         void paste();
         void thread(QAction*);
         void block(QAction*);
-        void mode(QAction*);
-        void networking();
         void renderScene();
         void abortRender();
         void about();
@@ -58,7 +55,6 @@ class window : public QMainWindow
         QMenu* renderMenu;
         QMenu* threadMenu;
         QMenu* blockMenu;
-        QMenu* modeMenu;
         QMenu* helpMenu;
 
         QAction* newAction;
@@ -70,8 +66,6 @@ class window : public QMainWindow
         QAction* pasteAction;
         QAction* threadAction[6];
         QAction* blockAction[7];
-        QAction* modeAction[3];
-        QAction* networkAction;
         QAction* renderAction;
         QAction* aboutAction;
         QAction* descriptionAction;
@@ -86,8 +80,6 @@ class window : public QMainWindow
         JobManager* jobManager;
 
         Runner* runner;
-
-        NetworkingDialog* networkDialog;
 
         SettingDockWidget* settings;
 

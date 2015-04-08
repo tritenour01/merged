@@ -30,8 +30,6 @@ void window::setup(void)
     runner = new Runner();
     jobManager = new JobManager(runner);
 
-    networkDialog = new NetworkingDialog(this);
-
     edit = new editWidget(manager, this);
 
     settings = new SettingDockWidget(this, manager, jobManager);
@@ -40,7 +38,6 @@ void window::setup(void)
 
     threadAction[0]->trigger();
     blockAction[0]->trigger();
-    modeAction[0]->trigger();
 
     setCentralWidget(edit);
 }
@@ -172,20 +169,6 @@ void window::block(QAction* action)
     runner->setBlocks(blocks.toInt());
 }
 
-void window::mode(QAction* action)
-{
-    for(int i = 0; i < 3; i++)
-        modeAction[i]->setChecked(false);
-    action->setChecked(true);
-}
-
-void window::networking(void)
-{
-    networkDialog->show();
-    networkDialog->raise();
-    networkDialog->activateWindow();
-}
-
 void window::renderScene(void)
 {
     string data = manager->getData();
@@ -262,15 +245,6 @@ void window::createActions(void)
         blockAction[i]->setCheckable(true);
     }
 
-    QString renderModes[] = {"Local", "Network - Master", "Network - Slave"};
-    for(int i = 0; i < 3; i++){
-        modeAction[i] = new QAction(renderModes[i], this);
-        modeAction[i]->setCheckable(true);
-    }
-
-    networkAction = new QAction(QIcon("icons/wifi.png"), "Networking", this);
-    connect(networkAction, SIGNAL(triggered()), this, SLOT(networking()));
-
     renderAction = new QAction(QIcon("icons/play.png"), "Render", this);
     connect(renderAction, SIGNAL(triggered()), this, SLOT(renderScene()));
 
@@ -308,12 +282,6 @@ void window::createMenu(void)
         blockMenu->addAction(blockAction[i]);
     connect(blockMenu, SIGNAL(triggered(QAction*)), this, SLOT(block(QAction*)));
 
-    modeMenu = renderMenu->addMenu("Mode");
-    for(int i = 0; i < 3; i++)
-        modeMenu->addAction(modeAction[i]);
-    connect(modeMenu, SIGNAL(triggered(QAction*)), this, SLOT(mode(QAction*)));
-
-    renderMenu->addAction(networkAction);
     renderMenu->addAction(renderAction);
 
     helpMenu = menuBar()->addMenu("Help");
@@ -334,8 +302,6 @@ void window::createToolbar(void)
     toolBar->addAction(pasteAction);
     toolBar->addSeparator();
     toolBar->addAction(renderAction);
-    toolBar->addSeparator();
-    toolBar->addAction(networkAction);
 
     QWidget* spacer = new QWidget();
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

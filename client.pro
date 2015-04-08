@@ -59,11 +59,7 @@ SOURCES += main.cpp \
     loader.cpp \
     runner.cpp \
     UIimage.cpp \
-    networkingDialog.cpp \
     UIlogger.cpp \
-    deviceManager.cpp \
-    device.cpp \
-    connection.cpp \
     settingDockWidget.cpp \
     previewWindow.cpp \
     jobWidget.cpp \
@@ -84,11 +80,7 @@ HEADERS  += \
     dataModel.h \
     runner.h \
     UIimage.h \
-    networkingDialog.h \
     UIlogger.h \
-    deviceManager.h \
-    device.h \
-    connection.h \
     settingDockWidget.h \
     previewWindow.h \
     jobWidget.h \

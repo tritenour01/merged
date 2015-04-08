@@ -107,7 +107,9 @@ int TableEntry::getID(void)
 void TableEntry::updateStatus(RenderJob::STATUS s)
 {
     statusItem->setData(0, RenderJob::statusToString(s));
-    if(s == RenderJob::STATUS::Complete)
+    if(s == RenderJob::STATUS::Complete ||
+       s == RenderJob::STATUS::Invalid ||
+       s == RenderJob::STATUS::Aborted)
         deleteButton->setEnabled(false);
 }
 
