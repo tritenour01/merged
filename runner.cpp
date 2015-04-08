@@ -1,6 +1,7 @@
 #include <runner.h>
 #include <mainwindow.h>
 #include <QDebug>
+#include <QTime>
 
 Worker::Worker(string path, int t, int b, UIprogressEvent* e)
 {
@@ -30,11 +31,18 @@ void Worker::interrupt(void)
 
 void Worker::Render(void)
 {
+    QTime timer;
+    timer.start();
+
     Raytracer R;
     if(!R.loadScene(filePath)){
         emit renderInvalid();
         return;
     }
+
+    float setupTime = (float)timer.elapsed() / 1000.0f;
+    Log::writeLine("Setup Time: " + Log::floatToString(setupTime));
+    timer.restart();
 
     image = new QImage(R.getWidth(), R.getHeight(), QImage::Format_ARGB32);
 
@@ -46,6 +54,9 @@ void Worker::Render(void)
 
     if(!interrupted)
         manager->Render();
+
+    float renderTime = (float)timer.elapsed() / 1000.0f;
+    Log::writeLine("Render Time: " + Log::floatToString(renderTime));
 
     image->save("image.png", "PNG");
 
